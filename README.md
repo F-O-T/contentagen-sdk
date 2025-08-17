@@ -1,143 +1,147 @@
-# @contentagen/sdk
+# ContentaGen SDK
 
-A JavaScript/TypeScript SDK for accessing the ContentaGen API, providing authentication and content management utilities.
+Official TypeScript SDK for interacting with the ContentaGen API (trpc endpoints).
 
-## Table of Contents
-- [Usage](#usage)
-- [API Reference](#api-reference)
-- [Error Codes](#error-codes)
-- [Changelog](#changelog)
+Features
+- Lightweight client for the `listContentByAgent` and `getContentBySlug` endpoints.
+- Input validation with Zod schemas.
+- Automatic date parsing for `createdAt` / `updatedAt`.
+- Small, consistent error code surface.
 
 ## Installation
 
+npm:
 ```bash
 npm install @contentagen/sdk
 ```
 
-## Usage
-
-### Initialize the SDK
-
-You must provide your API key to initialize the SDK:
-
-```ts
-import { createSdk } from '@contentagen/sdk';
-
-const sdk = createSdk({ apiKey: 'YOUR_API_KEY' });
+yarn:
+```bash
+yarn add @contentagen/sdk
 ```
 
-### List Content by Agent (Advanced Pagination & Filtering)
-
-The `listContentByAgent` method now supports:
-- **Pagination** via `limit` (number of items per page, default: 10, min: 1, max: 100) and `page` (page number, default: 1, min: 1)
-- **Status Filtering**: Filter results by content status (`draft`, `approved`, `generating`)
-- **Input Validation**: All inputs are strictly validated using Zod schemas; invalid parameters throw clear errors
-- **Rich Response**: Returns an object including post metadata, image URL, status, and total count
-
-#### Example Usage
+## Quick start (TypeScript)
 
 ```ts
-const contentList = await sdk.listContentByAgent({
-  agentId: "agent-uuid",
-  status: ["draft", "approved"],
-  limit: 20, // optional
-  page: 2 // optional
-});
-console.log(contentList.posts); // array of content post summaries
-console.log(contentList.total); // total number of items matching filter
+import { createSdk } from "@contentagen/sdk";
+import type { ContentList, ContentSelect } from "@contentagen/sdk";
+
+const sdk = createSdk({ apiKey: "YOUR_API_KEY" });
+
+async function example() {
+  // List content by agent
+  const listParams = {
+    agentId: ["00000000-0000-0000-0000-000000000000"], // UUIDs
+    status: ["approved", "draft"], // required array of statuses
+    limit: 10, // optional, default 10
+    page: 1, // optional, default 1
+  };
+
+  const list: ContentList = await sdk.listContentByAgent(listParams);
+  console.log("total:", list.total);
+  console.log("posts:", list.posts);
+
+  // Get content by slug
+  const selectParams = {
+    slug: "my-post-slug",
+    agentId: "00000000-0000-0000-0000-000000000000",
+  };
+
+  const post: ContentSelect = await sdk.getContentBySlug(selectParams);
+  console.log(post.id, post.meta.title, post.createdAt);
+}
 ```
 
-#### Input Schema
-```ts
-const ListContentByAgentInputSchema = z.object({
-  status: z
-    .enum(["draft", "approved", "generating"], {
-      message:
-        "Invalid content status. Must be one of: draft, approved, generating.",
-    })
-    .array(),
-  agentId: z.array(z.string().uuid("Invalid Agent ID format.")),
-  limit: z.number().min(1).max(100).optional().default(10),
-  page: z.number().min(1).optional().default(1),
-});
-```
-(see [Input Schema](#input-schema))
+## API
 
-#### Response Format
-See [API Reference](#api-reference) for details on the response format.
+Exports
+- `createSdk(config: { apiKey: string }): ContentaGenSDK` — factory that returns a new SDK instance.
+- `ContentaGenSDK` class — same methods available on instances.
+- Zod schemas re-exported for advanced usage:
+  - `ContentListResponseSchema`
+  - `ContentSelectSchema`
+  - `GetContentBySlugInputSchema`
+  - `ListContentByAgentInputSchema`
 
-### Get Content by Slug
+### Methods
 
-```ts
-const item = await sdk.getContentBySlug({ 
-  slug: 'your-content-slug',
-  agentId: 'agent-uuid'
-});
-console.log(item);
+- `sdk.listContentByAgent(params)`
+  - params (validated by `ListContentByAgentInputSchema`):
+    - `agentId`: string[] (UUIDs) — required
+    - `status`: ("draft" | "approved" | "generating")[] — required
+    - `limit?: number` — optional, default 10, between 1 and 100
+    - `page?: number` — optional, default 1, min 1
+  - Returns: `Promise<ContentList>`
 
-## API Reference
+- `sdk.getContentBySlug(params)`
+  - params (validated by `GetContentBySlugInputSchema`):
+    - `slug`: string — required
+    - `agentId`: string (UUID) — required
+  - Returns: `Promise<ContentSelect>`
 
-### `createSdk(config: { apiKey: string })`
-Creates and returns a new `ContentaGenSDK` instance.
+## Types (shapes)
 
-### `sdk.listContentByAgent(params)`
-Fetches a list of content items for a given agent, with pagination support.
-- `params` (Zod schema):
-
-  ```ts
-  const ListContentByAgentInputSchema = z.object({
-    status: z
-      .enum(['draft', 'approved', 'generating'], {
-        message:
-          "Invalid content status. Must be one of: draft, approved, generating.",
-      })
-      .array(),
-    agentId: z.array(z.string().uuid('Invalid Agent ID format.')),
-    limit: z.number().min(1).max(100).optional().default(10),
-    page: z.number().min(1).optional().default(1),
-  });
-  ```
-- Returns: `Promise<{ posts: Array<{ id, meta, imageUrl, status, stats, createdAt }>, total: number }>`
-  - Each post object includes:
+- ContentList
+  - posts: Array of summary objects:
     - `id`: string
-    - `meta`: metadata object
-    - `imageUrl`: string
-    - `status`: string
-    - `stats`: post stats object
-    - `createdAt`: Date object
-    - See [Response Example](#response-example).
+    - `meta`: { title?: string; description?: string; keywords?: string[]; slug?: string; sources?: string[] }
+    - `imageUrl`: string | null
+    - `status`: "draft" | "approved" | "generating"
+    - `stats`: { wordsCount?: string; readTimeMinutes?: string; qualityScore?: string }
+    - `createdAt`: Date
+  - total: number
 
-**Pagination:**
-Use `limit` to control the number of items per page, and `page` to select which page of results to fetch.
+- ContentSelect
+  - `id`: string
+  - `agentId`: string
+  - `imageUrl`: string | null
+  - `body`: string
+  - `status`: "draft" | "approved" | "generating"
+  - `meta`: { title?: string; description?: string; keywords?: string[]; slug?: string; sources?: string[] }
+  - `request`: { description: string }
+  - `stats`: { wordsCount?: string; readTimeMinutes?: string; qualityScore?: string }
+  - `createdAt`: Date
+  - `updatedAt`: Date
 
-### `sdk.getContentBySlug(params)`
-Fetches a content item by its slug.
-- `params` (Zod schema):
-
-  ```ts
-  const GetContentBySlugInputSchema = z.object({
-    slug: z.string().min(1, "Slug is required."),
-    agentId: z.string().uuid("Invalid Agent ID format."),
-  });
-  ```
-- Returns: `Promise<ContentSelect>`
-
-### `sdk.getContentBySlug(params)`
-Fetches a content item by its slug.
-- `params` (Zod schema):
-
-  ```ts
-  const GetContentBySlugInputSchema = z.object({
-    slug: z.string(),
-  });
-  ```
-- Returns: `Promise<ContentSelect>`
-
-## Error Codes
-- `SDK_E001`: API key is missing
+## Error codes
+- `SDK_E001`: apiKey is required to initialize the ContentaGenSDK
 - `SDK_E002`: API request failed
-- `SDK_E003`: Invalid API response
-- `SDK_E004`: Invalid input
+- `SDK_E003`: Invalid API response format.
+- `SDK_E004`: Invalid input.
+
+## Example with error handling
+
+```ts
+async function run() {
+  try {
+    const sdk = createSdk({ apiKey: process.env.CONTENTAGEN_API_KEY! });
+
+    const list = await sdk.listContentByAgent({
+      agentId: ["00000000-0000-0000-0000-000000000000"],
+      status: ["approved"],
+      limit: 5,
+      page: 1,
+    });
+
+    if (list.total === 0) {
+      console.log("No posts found");
+      return;
+    }
+
+    const first = list.posts[0];
+    console.log("First post id:", first.id);
+
+    const post = await sdk.getContentBySlug({
+      slug: first.meta.slug ?? "unknown-slug",
+      agentId: first.agentId || "00000000-0000-0000-0000-000000000000",
+    });
+
+    console.log("Post body:", post.body);
+  } catch (err) {
+    console.error("SDK error:", err);
+  }
+}
+```
 
 ## Changelog
 
@@ -145,5 +149,4 @@ See [CHANGELOG.md](./CHANGELOG.md) for version history and updates.
 
 ## License
 
-GPLv3
-
+Apache License 2.0
