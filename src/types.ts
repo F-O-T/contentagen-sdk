@@ -2,18 +2,18 @@ import { z } from "zod";
 
 // Content-related schemas and types (extracted from database package)
 export const ContentStatsSchema = z.object({
-   wordsCount: z
-      .string()
-      .optional()
-      .describe("The number of words in the content."),
-   readTimeMinutes: z
-      .string()
-      .optional()
-      .describe("Estimated reading time in minutes."),
-   qualityScore: z
-      .string()
-      .optional()
-      .describe("A score representing the quality of the content."),
+	wordsCount: z
+		.string()
+		.optional()
+		.describe("The number of words in the content."),
+	readTimeMinutes: z
+		.string()
+		.optional()
+		.describe("Estimated reading time in minutes."),
+	qualityScore: z
+		.string()
+		.optional()
+		.describe("A score representing the quality of the content."),
 });
 
 export const ContentMetaSchema = z.object({
@@ -37,7 +37,7 @@ export const ContentMetaSchema = z.object({
 });
 
 export const ContentRequestSchema = z.object({
-   description: z.string().min(1, "Description is required"),
+	description: z.string().min(1, "Description is required"),
 });
 
 // Content status enum values
@@ -63,29 +63,28 @@ export const GetContentBySlugInputSchema = z.object({
 
 // Content select schema and type
 export const ContentSelectSchema = z.object({
-   id: z.string(),
-   agentId: z.string(),
-   imageUrl: z.string().nullable(),
-   userId: z.string(),
-   body: z.string(),
-   status: z.enum(ContentStatusValues),
-   meta: ContentMetaSchema,
-   request: ContentRequestSchema,
-   stats: ContentStatsSchema,
-   createdAt: z.date(),
-   updatedAt: z.date(),
+	id: z.string(),
+	agentId: z.string(),
+	imageUrl: z.string().nullable(),
+	body: z.string(),
+	status: z.enum(ContentStatusValues),
+	meta: ContentMetaSchema,
+	request: ContentRequestSchema,
+	stats: ContentStatsSchema,
+	createdAt: z.date(),
+	updatedAt: z.date(),
 });
 
 export const ContentListResponseSchema = z.object({
-   posts: ContentSelectSchema.pick({
-      id: true,
-      meta: true,
-      imageUrl: true,
-      status: true,
-      createdAt: true,
-      stats: true,
-   }).array(),
-   total: z.number(),
+	posts: ContentSelectSchema.pick({
+		id: true,
+		meta: true,
+		imageUrl: true,
+		status: true,
+		createdAt: true,
+		stats: true,
+	}).array(),
+	total: z.number(),
 });
 export type ContentList = z.infer<typeof ContentListResponseSchema>;
 // Exported types
