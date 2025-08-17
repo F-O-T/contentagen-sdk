@@ -50,8 +50,13 @@ console.log(contentList.total); // total number of items matching filter
 #### Input Schema
 ```ts
 const ListContentByAgentInputSchema = z.object({
-  status: z.enum(["draft", "approved", "generating"]).array(),
-  agentId: z.string().uuid("Invalid Agent ID format."),
+  status: z
+    .enum(["draft", "approved", "generating"], {
+      message:
+        "Invalid content status. Must be one of: draft, approved, generating.",
+    })
+    .array(),
+  agentId: z.array(z.string().uuid("Invalid Agent ID format.")),
   limit: z.number().min(1).max(100).optional().default(10),
   page: z.number().min(1).optional().default(1),
 });
@@ -61,19 +66,14 @@ const ListContentByAgentInputSchema = z.object({
 #### Response Format
 See [API Reference](#api-reference) for details on the response format.
 
-### Get Content by ID
-
-```ts
-const item = await sdk.getContentById({ id: 'content-uuid' });
-console.log(item);
-```
-
 ### Get Content by Slug
 
 ```ts
-const item = await sdk.getContentBySlug({ slug: 'your-content-slug' });
+const item = await sdk.getContentBySlug({ 
+  slug: 'your-content-slug',
+  agentId: 'agent-uuid'
+});
 console.log(item);
-```
 
 ## API Reference
 
@@ -86,8 +86,13 @@ Fetches a list of content items for a given agent, with pagination support.
 
   ```ts
   const ListContentByAgentInputSchema = z.object({
-    status: z.enum(['draft', 'approved', 'generating']).array(),
-    agentId: z.string().uuid('Invalid Agent ID format.'),
+    status: z
+      .enum(['draft', 'approved', 'generating'], {
+        message:
+          "Invalid content status. Must be one of: draft, approved, generating.",
+      })
+      .array(),
+    agentId: z.array(z.string().uuid('Invalid Agent ID format.')),
     limit: z.number().min(1).max(100).optional().default(10),
     page: z.number().min(1).optional().default(1),
   });
@@ -99,19 +104,20 @@ Fetches a list of content items for a given agent, with pagination support.
     - `imageUrl`: string
     - `status`: string
     - `stats`: post stats object
-    - `createdAt`: ISO date string
+    - `createdAt`: Date object
     - See [Response Example](#response-example).
 
 **Pagination:**
 Use `limit` to control the number of items per page, and `page` to select which page of results to fetch.
 
-### `sdk.getContentById(params)`
-Fetches a content item by its unique ID.
+### `sdk.getContentBySlug(params)`
+Fetches a content item by its slug.
 - `params` (Zod schema):
 
   ```ts
-  const GetContentByIdInputSchema = z.object({
-    id: z.string().uuid('Invalid Content ID format.'),
+  const GetContentBySlugInputSchema = z.object({
+    slug: z.string().min(1, "Slug is required."),
+    agentId: z.string().uuid("Invalid Agent ID format."),
   });
   ```
 - Returns: `Promise<ContentSelect>`

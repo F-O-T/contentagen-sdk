@@ -1,6 +1,6 @@
 {
    "name": "@contentagen/sdk",
-   "version": "0.4.9",
+   "version": "0.5.0",
    "private": false,
    "type": "module",
    "exports": {
@@ -18,7 +18,7 @@
    ],
    "scripts": {
       "build": "tsup",
-      "check": "biome check --write ./src",
+      "check": "bunx --bun biome check --write .",
       "typecheck": "tsc --build --noEmit --emitDeclarationOnly false",
       "publish": "npm publish --access public",
       "test": "vitest run "
@@ -28,6 +28,7 @@
       "zod": "4.0.14"
    },
    "devDependencies": {
+      "@biomejs/biome": "2.2.0",
       "@types/node": "^24.2.1",
       "msw": "^2.10.4",
       "tsup": "^8.5.0",
