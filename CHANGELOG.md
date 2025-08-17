@@ -4,6 +4,7 @@ All notable changes to this package will be documented in this file.
 
 ## [0.5.0] - 2025-08-17
 ### Changed
+- Removed `userId` from the return types of content-related API responses for improved privacy and schema clarity.
 - Updated `listContentByAgent` input schema to accept an array of agent IDs instead of a single agent ID
 - Enhanced date transformation to properly convert ISO strings to Date objects in API responses
 - Improved error handling with more descriptive error messages
