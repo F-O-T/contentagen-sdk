@@ -9,7 +9,7 @@ let fetchMock: ReturnType<typeof vi.fn>;
 // listContentByAgent tests
 const validListInput = {
    status: ["draft", "approved"] as Array<"draft" | "approved" | "generating">,
-   agentId,
+   agentId: [agentId],
    limit: 2,
    page: 1,
 };
@@ -23,8 +23,8 @@ const mockListResponse = {
                   meta: {
                      title: "Test Title",
                      slug: "test-title",
-                     tags: ["tag1"],
-                     topics: ["topic1"],
+                     description: "Test description",
+                     keywords: ["tag1"],
                      sources: ["source1"],
                   },
                   imageUrl: null,
@@ -73,7 +73,7 @@ describe("ContentaGenSDK.listContentByAgent", () => {
 
    it("throws on invalid input", async () => {
       await expect(
-         sdk.listContentByAgent({ ...validListInput, agentId: "not-a-uuid" }),
+         sdk.listContentByAgent({ ...validListInput, agentId: ["not-a-uuid"] }),
       ).rejects.toThrow(/SDK_E004/);
    });
 
@@ -89,84 +89,8 @@ describe("ContentaGenSDK.listContentByAgent", () => {
    });
 });
 
-// getContentById tests
-const validIdInput = { id: agentId };
-const mockIdResponse = {
-   result: {
-      data: {
-         json: {
-            id: "post1",
-            agentId,
-            imageUrl: null,
-            userId: "user1",
-            body: "Test body",
-            status: "draft",
-            meta: {
-               title: "Test Title",
-               slug: "test-title",
-               tags: ["tag1"],
-               topics: ["topic1"],
-               sources: ["source1"],
-            },
-            request: { description: "desc" },
-            stats: {
-               wordsCount: "100",
-               readTimeMinutes: "2",
-               qualityScore: "A",
-            },
-            createdAt: new Date().toISOString(),
-            updatedAt: new Date().toISOString(),
-         },
-      },
-   },
-};
-
-describe("ContentaGenSDK.getContentById", () => {
-   beforeEach(() => {
-      sdk = createSdk({ apiKey });
-      fetchMock = vi.fn().mockResolvedValue({
-         ok: true,
-         json: () => Promise.resolve(mockIdResponse),
-         statusText: "OK",
-      });
-      globalThis.fetch = fetchMock as unknown as typeof fetch;
-   });
-
-   afterEach(() => {
-      vi.restoreAllMocks();
-   });
-
-   it("returns parsed content for valid input", async () => {
-      const result = await sdk.getContentById(validIdInput);
-      const expected = {
-         ...mockIdResponse.result.data.json,
-         createdAt: new Date(mockIdResponse.result.data.json.createdAt),
-         updatedAt: new Date(mockIdResponse.result.data.json.updatedAt),
-      };
-      expect(result).toEqual(expected);
-      expect(fetchMock).toHaveBeenCalledTimes(1);
-   });
-
-   it("throws on invalid input", async () => {
-      await expect(sdk.getContentById({ id: "not-a-uuid" })).rejects.toThrow(
-         /SDK_E004/,
-      );
-   });
-
-   it("throws on API error", async () => {
-      fetchMock.mockResolvedValueOnce({
-         ok: false,
-         statusText: "Internal Server Error",
-         json: () => Promise.resolve({}),
-      });
-      await expect(sdk.getContentById(validIdInput)).rejects.toThrow(
-         /SDK_E002/,
-      );
-   });
-});
-
 // getContentBySlug tests
-const validSlugInput = { slug: "test-title" };
+const validSlugInput = { slug: "test-title", agentId };
 const mockSlugResponse = {
    result: {
       data: {
@@ -174,14 +98,13 @@ const mockSlugResponse = {
             id: "post1",
             agentId,
             imageUrl: null,
-            userId: "user1",
             body: "Test body",
             status: "draft",
             meta: {
                title: "Test Title",
                slug: "test-title",
-               tags: ["tag1"],
-               topics: ["topic1"],
+               description: "Test description",
+               keywords: ["tag1"],
                sources: ["source1"],
             },
             request: { description: "desc" },
@@ -224,7 +147,7 @@ describe("ContentaGenSDK.getContentBySlug", () => {
    });
 
    it("throws on invalid input", async () => {
-      await expect(sdk.getContentBySlug({ slug: "" })).rejects.toThrow(
+      await expect(sdk.getContentBySlug({ slug: "", agentId })).rejects.toThrow(
          /SDK_E004/,
       );
    });
