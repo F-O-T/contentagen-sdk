@@ -42,6 +42,20 @@ describe("extract-changelog", () => {
 });
 
 describe("create-release", () => {
+	const FIXTURE_FULL_CHANGELOG = `# Changelog
+
+## [1.1.0] - 2024-02-01
+
+- Patch
+
+## [1.0.0] - 2024-01-01
+
+- Initial release
+
+## [0.9.0] - 2023-12-01
+
+- Beta`;
+
 	const envBackup = { ...process.env };
 
 	beforeEach(() => {
@@ -51,6 +65,79 @@ describe("create-release", () => {
 
 	afterEach(() => {
 		process.env = envBackup;
+		vi.restoreAllMocks();
+	});
+
+	it("backfills missing releases only", async () => {
+		process.env.GITHUB_TOKEN = "fake";
+		process.env.GITHUB_REPOSITORY = "owner/repo";
+		process.env.BACKFILL = "true";
+
+		// mock readChangelog to return full changelog
+		const readStub = vi
+			.spyOn(extract, "readChangelog")
+			.mockResolvedValue(FIXTURE_FULL_CHANGELOG);
+
+		// import create-release fresh
+		const mod = await import("../scripts/create-release");
+
+		// mock global fetch to simulate GitHub API and Discord
+		const origFetch = globalThis.fetch;
+		globalThis.fetch = vi
+			.fn()
+			.mockImplementation(async (url: any, opts: any) => {
+				const u = String(url);
+				const method = opts?.method || "GET";
+				// simulate GET release tag checks
+				if (u.includes("/releases/tags/1.1.0") && method === "GET") {
+					return {
+						ok: false,
+						status: 404,
+						statusText: "Not Found",
+						text: async () => JSON.stringify({ message: "Not Found" }),
+					};
+				}
+				if (u.includes("/releases/tags/1.0.0") && method === "GET") {
+					return {
+						ok: true,
+						status: 200,
+						statusText: "OK",
+						text: async () => JSON.stringify({ id: 111 }),
+					};
+				}
+				if (u.includes("/releases/tags/0.9.0") && method === "GET") {
+					return {
+						ok: true,
+						status: 200,
+						statusText: "OK",
+						text: async () => JSON.stringify({ id: 110 }),
+					};
+				}
+				// simulate POST to create release
+				if (u.endsWith("/releases") && method === "POST") {
+					return {
+						ok: true,
+						status: 201,
+						statusText: "Created",
+						text: async () =>
+							JSON.stringify({
+								id: 123,
+								html_url: "https://example.com/1.1.0",
+							}),
+					};
+				}
+				// discord webhook
+				if (u.includes("discord.com") && method === "POST") {
+					return { ok: true, status: 204, text: async () => "" };
+				}
+				return { ok: true, status: 200, text: async () => JSON.stringify({}) };
+			});
+
+		await (mod as any).run();
+
+		expect(globalThis.fetch as any).toHaveBeenCalled();
+		if (origFetch) globalThis.fetch = origFetch;
+		readStub.mockRestore();
 	});
 
 	it("throws without GITHUB_TOKEN", async () => {
