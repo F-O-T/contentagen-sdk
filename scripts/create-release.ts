@@ -2,6 +2,7 @@ import {
 	readChangelog,
 	extractForVersion,
 	extractVersionFromPackageJson,
+	parseAllVersions,
 } from "./extract-changelog";
 
 const GITHUB_API = "https://api.github.com";
@@ -64,14 +65,64 @@ export async function run() {
 		tag = `v${version}`;
 	}
 
+	const backfill =
+		(process.env.BACKFILL || process.env.INPUT_BACKFILL) === "true";
 	const version = tag.replace(/^v/, "");
 
 	const changelog = await readChangelog();
+
+	const { owner, repo } = ownerRepo();
+
+	if (backfill) {
+		// create releases for all versions in changelog if they don't exist
+		const entries = parseAllVersions(changelog);
+		for (const e of entries) {
+			const ver = e.version;
+			const tagName = ver; // use exact version as tag and name
+			const listUrl = `${GITHUB_API}/repos/${owner}/${repo}/releases/tags/${tagName}`;
+			try {
+				await githubFetch(listUrl, "GET", null, token);
+				console.log(`Release exists: ${tagName}`);
+				continue;
+			} catch (err: any) {
+				if (err.status !== 404) throw err;
+			}
+
+			const createUrl = `${GITHUB_API}/repos/${owner}/${repo}/releases`;
+			const createBody = {
+				tag_name: tagName,
+				name: tagName,
+				body: e.body,
+				draft: false,
+				prerelease: false,
+			};
+			const created = await githubFetch(createUrl, "POST", createBody, token);
+			console.log("Created release:", created.html_url || created.id);
+
+			// Optional Discord notification per created release
+			const webhook = process.env.DISCORD_WEBHOOK_URL;
+			if (webhook) {
+				try {
+					const msg = {
+						content: `Release ${tagName} published for ${owner}/${repo}: ${created.html_url || "(no url)"}`,
+					};
+					await fetch(webhook, {
+						method: "POST",
+						headers: { "Content-Type": "application/json" },
+						body: JSON.stringify(msg),
+					});
+					console.log("Sent Discord notification");
+				} catch (e) {
+					console.warn("Failed to send Discord notification:", e);
+				}
+			}
+		}
+		return;
+	}
+
 	const entry = extractForVersion(changelog, version);
 	if (!entry)
 		throw new Error(`Changelog entry not found for version ${version}`);
-
-	const { owner, repo } = ownerRepo();
 
 	const listUrl = `${GITHUB_API}/repos/${owner}/${repo}/releases/tags/${tag}`;
 	try {

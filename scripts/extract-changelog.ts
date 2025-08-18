@@ -47,3 +47,36 @@ export async function extractVersionFromPackageJson(
 	const json = JSON.parse(await fs.readFile(p, "utf8"));
 	return json.version as string;
 }
+
+export function parseAllVersions(
+	changelogText: string,
+): Array<{ version: string; body: string }> {
+	if (!changelogText) return [];
+	const lines = changelogText.split(/\r?\n/);
+	const entries: Array<{ version: string; body: string }> = [];
+	const headerRe = /^##+\s*\[?([^\]\s]+)\]?\b.*$/; // capture version-like token after ##
+	let i = 0;
+	while (i < lines.length) {
+		const m = lines[i].match(headerRe);
+		if (m) {
+			const version = m[1];
+			const levelMatch = lines[i].match(/^(#+)/);
+			const headerLevel = levelMatch ? levelMatch[1].length : 2;
+			let start = i + 1;
+			let end = lines.length;
+			const nextHeader = new RegExp(`^#{1,${headerLevel}}\\s+`);
+			for (let j = start; j < lines.length; j++) {
+				if (nextHeader.test(lines[j])) {
+					end = j;
+					break;
+				}
+			}
+			const body = lines.slice(start, end).join("\n").trim();
+			entries.push({ version, body });
+			i = end;
+		} else {
+			i++;
+		}
+	}
+	return entries;
+}
