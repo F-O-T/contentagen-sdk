@@ -50,6 +50,7 @@ jobs:
       - name: Create or update release
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+          DISCORD_WEBHOOK_URL: ${{ secrets.DISCORD_WEBHOOK_URL }}
         run: |
           TAG=${{ steps.tag.outputs.tag }}
           echo "Creating release for $TAG"

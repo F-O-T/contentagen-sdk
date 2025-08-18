@@ -2,7 +2,7 @@ import {
 	readChangelog,
 	extractForVersion,
 	extractVersionFromPackageJson,
-} from "./extract-changelog.ts";
+} from "./extract-changelog";
 
 const GITHUB_API = "https://api.github.com";
 
@@ -48,7 +48,7 @@ async function githubFetch(
 	return json;
 }
 
-async function run() {
+export async function run() {
 	const inputTag = process.env.INPUT_TAG || process.env.TAG;
 	const token = process.env.GITHUB_TOKEN;
 	if (!token) throw new Error("GITHUB_TOKEN required");
@@ -101,6 +101,24 @@ async function run() {
 	};
 	const created = await githubFetch(createUrl, "POST", createBody, token);
 	console.log("Created release:", created.html_url || created.id);
+
+	// Optional Discord notification
+	const webhook = process.env.DISCORD_WEBHOOK_URL;
+	if (webhook) {
+		try {
+			const msg = {
+				content: `Release ${tag} published for ${owner}/${repo}: ${created.html_url || "(no url)"}`,
+			};
+			await fetch(webhook, {
+				method: "POST",
+				headers: { "Content-Type": "application/json" },
+				body: JSON.stringify(msg),
+			});
+			console.log("Sent Discord notification");
+		} catch (e) {
+			console.warn("Failed to send Discord notification:", e);
+		}
+	}
 }
 
 if (
