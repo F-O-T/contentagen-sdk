@@ -1,46 +1,47 @@
 {
-   "name": "@contentagen/sdk",
-   "version": "0.5.0",
-   "private": false,
-   "type": "module",
-   "repository": {
-      "type": "git",
-      "url": "https://github.com/code-weavers/contentagen-sdk.git"
-   },
-   "exports": {
-      ".": {
-         "types": "./dist/index.d.ts",
-         "import": "./dist/index.js",
-         "default": "./dist/index.js"
-      }
-   },
-   "files": [
-      "dist",
-      "README.md",
-      "LICENSE.md",
-      "CHANGELOG.md"
-   ],
-   "scripts": {
-      "build": "tsup",
-      "check": "bunx --bun biome check --write .",
-      "typecheck": "tsc --build --noEmit --emitDeclarationOnly false",
-      "publish": "npm publish --access public",
-      "test": "vitest run "
-   },
-   "dependencies": {
-      "superjson": "2.2.2",
-      "zod": "4.0.14"
-   },
-   "devDependencies": {
-      "@biomejs/biome": "2.2.0",
-      "@types/node": "^24.2.1",
-      "msw": "^2.10.4",
-      "tsup": "^8.5.0",
-      "typescript": "5.8.3",
-      "vitest": "^3.2.4"
-   },
-   "publishConfig": {
-      "access": "public"
-   },
-   "license": "Apache-2.0"
+	"name": "@contentagen/sdk",
+	"version": "0.5.0",
+	"private": false,
+	"type": "module",
+	"repository": {
+		"type": "git",
+		"url": "https://github.com/code-weavers/contentagen-sdk.git"
+	},
+	"exports": {
+		".": {
+			"types": "./dist/index.d.ts",
+			"import": "./dist/index.js",
+			"default": "./dist/index.js"
+		}
+	},
+	"files": [
+		"dist",
+		"README.md",
+		"LICENSE.md",
+		"CHANGELOG.md"
+	],
+	"scripts": {
+		"build": "tsup",
+		"check": "bunx --bun biome check --write .",
+		"typecheck": "tsc --build --noEmit --emitDeclarationOnly false",
+		"publish": "npm publish --access public",
+		"test": "vitest run ",
+		"release": "bun run scripts/create-release.ts"
+	},
+	"dependencies": {
+		"superjson": "2.2.2",
+		"zod": "4.0.14"
+	},
+	"devDependencies": {
+		"@biomejs/biome": "2.2.0",
+		"@types/node": "^24.2.1",
+		"msw": "^2.10.4",
+		"tsup": "^8.5.0",
+		"typescript": "5.8.3",
+		"vitest": "^3.2.4"
+	},
+	"publishConfig": {
+		"access": "public"
+	},
+	"license": "Apache-2.0"
 }

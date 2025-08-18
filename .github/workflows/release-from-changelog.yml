@@ -53,4 +53,4 @@ jobs:
         run: |
           TAG=${{ steps.tag.outputs.tag }}
           echo "Creating release for $TAG"
-          node scripts/create-release.mjs
+          bun run release
