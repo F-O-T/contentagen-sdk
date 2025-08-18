@@ -1,8 +1,7 @@
-import { describe, it, expect, vi, beforeEach, afterEach } from "vitest";
-import fs from "fs/promises";
-import path from "path";
+import fs from "node:fs/promises";
+import path from "node:path";
+import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
 import * as extract from "../scripts/extract-changelog";
-import * as create from "../scripts/create-release";
 
 const FIXTURE_CHANGELOG = `# Changelog
 
