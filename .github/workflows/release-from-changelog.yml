@@ -7,7 +7,6 @@ on:
     paths:
       - 'package.json'
       - 'CHANGELOG.md'
-  push:
     tags:
       - 'v*.*.*'
   workflow_dispatch:
