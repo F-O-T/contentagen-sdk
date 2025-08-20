@@ -15,10 +15,7 @@
 		}
 	},
 	"files": [
-		"dist",
-		"README.md",
-		"LICENSE.md",
-		"CHANGELOG.md"
+		"dist"
 	],
 	"scripts": {
 		"build": "tsup",
