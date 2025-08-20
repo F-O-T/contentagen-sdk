@@ -8,7 +8,7 @@ let fetchMock: ReturnType<typeof vi.fn>;
 
 // listContentByAgent tests
 const validListInput = {
-	status: ["draft", "approved"] as Array<"draft" | "approved" | "generating">,
+	status: ["draft", "approved"] as Array<"draft" | "approved">,
 	agentId: [agentId],
 	limit: 2,
 	page: 1,

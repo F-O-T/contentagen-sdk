@@ -41,14 +41,13 @@ export const ContentRequestSchema = z.object({
 });
 
 // Content status enum values
-export const ContentStatusValues = ["draft", "approved", "generating"] as const;
+export const ContentStatusValues = ["draft", "approved"] as const;
 
 // Input schemas for API calls
 export const ListContentByAgentInputSchema = z.object({
 	status: z
 		.enum(ContentStatusValues, {
-			message:
-				"Invalid content status. Must be one of: draft, approved, generating.",
+			message: "Invalid content status. Must be one of: draft, approved.",
 		})
 		.array(),
 	agentId: z.array(z.uuid("Invalid Agent ID format.")),
