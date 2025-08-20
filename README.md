@@ -1,9 +1,9 @@
 # ContentaGen SDK
 
-Official TypeScript SDK for interacting with the ContentaGen API (trpc endpoints).
+Official TypeScript SDK for interacting with the ContentaGen API.
 
 Features
-- Lightweight client for the `listContentByAgent` and `getContentBySlug` endpoints.
+- Lightweight client.
 - Input validation with Zod schemas.
 - Automatic date parsing for `createdAt` / `updatedAt`.
 - Small, consistent error code surface.
