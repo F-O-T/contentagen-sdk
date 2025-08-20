@@ -2,6 +2,10 @@
 
 All notable changes to this package will be documented in this file.
 
+## [0.6.0] - 2025-08-20
+### Breaking
+- Removed deprecated `generating` status from all content-related types, schemas, and API validation. The SDK now only supports `draft` and `approved` statuses for content.
+
 ## [0.5.0] - 2025-08-17
 ### Changed
 - Removed `userId` from the return types of content-related API responses for improved privacy and schema clarity.
