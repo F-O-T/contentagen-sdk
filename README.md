@@ -68,7 +68,7 @@ Exports
 - `sdk.listContentByAgent(params)`
   - params (validated by `ListContentByAgentInputSchema`):
     - `agentId`: string[] (UUIDs) — required
-    - `status`: ("draft" | "approved" | "generating")[] — required
+    - `status`: ("draft" | "approved" )[] — required
     - `limit?: number` — optional, default 10, between 1 and 100
     - `page?: number` — optional, default 1, min 1
   - Returns: `Promise<ContentList>`
@@ -86,7 +86,7 @@ Exports
     - `id`: string
     - `meta`: { title?: string; description?: string; keywords?: string[]; slug?: string; sources?: string[] }
     - `imageUrl`: string | null
-    - `status`: "draft" | "approved" | "generating"
+    - `status`: "draft" | "approved"  
     - `stats`: { wordsCount?: string; readTimeMinutes?: string; qualityScore?: string }
     - `createdAt`: Date
   - total: number
@@ -96,7 +96,7 @@ Exports
   - `agentId`: string
   - `imageUrl`: string | null
   - `body`: string
-  - `status`: "draft" | "approved" | "generating"
+  - `status`: "draft" | "approved"  
   - `meta`: { title?: string; description?: string; keywords?: string[]; slug?: string; sources?: string[] }
   - `request`: { description: string }
   - `stats`: { wordsCount?: string; readTimeMinutes?: string; qualityScore?: string }
