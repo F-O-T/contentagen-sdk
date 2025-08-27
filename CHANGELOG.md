@@ -2,6 +2,14 @@
 
 All notable changes to this package will be documented in this file.
 
+## [0.7.0] - 2025-08-27
+### Added
+- New `getRelatedSlugs` procedure: fetches related post slugs for a given content slug and agent ID.
+
+### Changed
+- `getContentBySlug` now returns the agent persona config in its response.
+- Updated and added tests for both procedures to ensure correct behavior and type safety.
+
 ## [0.6.0] - 2025-08-20
 ### Breaking
 - Removed deprecated `generating` status from all content-related types, schemas, and API validation. The SDK now only supports `draft` and `approved` statuses for content.

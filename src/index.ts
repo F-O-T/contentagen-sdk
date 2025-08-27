@@ -6,6 +6,7 @@ import {
 	ContentSelectSchema,
 	GetContentBySlugInputSchema,
 	ListContentByAgentInputSchema,
+	RelatedSlugsResponseSchema,
 } from "./types";
 
 export const ERROR_CODES = {
@@ -30,6 +31,7 @@ export const ERROR_CODES = {
 export const TRPC_ENDPOINTS = {
 	listContentByAgent: "listContentByAgent",
 	getContentBySlug: "getContentBySlug",
+	getRelatedSlugs: "getRelatedSlugs",
 };
 
 const PRODUCTION_API_URL = "https://api.contentagen.com";
@@ -160,6 +162,27 @@ export class ContentaGenSDK {
 				const { code, message } = ERROR_CODES.INVALID_INPUT;
 				throw new Error(
 					`${code}: ${message} for getContentBySlug: ${error.issues.map((e) => e.message).join(", ")}`,
+				);
+			}
+			throw error;
+		}
+	}
+
+	async getRelatedSlugs(
+		params: z.input<typeof GetContentBySlugInputSchema>,
+	): Promise<string[]> {
+		try {
+			const validatedParams = GetContentBySlugInputSchema.parse(params);
+			return this._query(
+				TRPC_ENDPOINTS.getRelatedSlugs,
+				validatedParams,
+				RelatedSlugsResponseSchema,
+			);
+		} catch (error) {
+			if (error instanceof z.ZodError) {
+				const { code, message } = ERROR_CODES.INVALID_INPUT;
+				throw new Error(
+					`${code}: ${message} for getRelatedSlugs: ${error.issues.map((e) => e.message).join(", ")}`,
 				);
 			}
 			throw error;
