@@ -43,6 +43,55 @@ export const ContentRequestSchema = z.object({
 // Content status enum values
 export const ContentStatusValues = ["draft", "approved"] as const;
 
+export const VoiceConfigSchema = z.object({
+	communication: z.enum(["first_person", "third_person"]),
+});
+
+// 2. Audience
+export const AudienceConfigSchema = z.object({
+	base: z.enum(["general_public", "professionals", "beginners", "customers"]),
+});
+
+// 3. Format & Structure
+export const FormatConfigSchema = z.object({
+	style: z.enum(["structured", "narrative", "list_based"]),
+	listStyle: z.enum(["bullets", "numbered"]).optional(),
+});
+
+// 4. Language
+export const LanguageConfigSchema = z.object({
+	primary: z.enum(["en", "pt", "es"]),
+	variant: z
+		.enum(["en-US", "en-GB", "pt-BR", "pt-PT", "es-ES", "es-MX"])
+		.optional(),
+});
+
+// 5. Brand Asset Bundle
+export const BrandConfigSchema = z.object({
+	integrationStyle: z.enum([
+		"strict_guideline",
+		"flexible_guideline",
+		"reference_only",
+		"creative_blend",
+	]),
+	blacklistWords: z.string().optional(),
+});
+
+// 6. Repurposing — strongly-typed channels
+export const PurposeChannelSchema = z.enum(["blog_post"]);
+
+export const PersonaConfigSchema = z.object({
+	metadata: z.object({
+		name: z.string().min(1, "This field is required"),
+		description: z.string().min(1, "This field is required"),
+	}),
+	voice: VoiceConfigSchema.partial().optional(),
+	audience: AudienceConfigSchema.partial().optional(),
+	formatting: FormatConfigSchema.partial().optional(),
+	language: LanguageConfigSchema.partial().optional(),
+	brand: BrandConfigSchema.partial().optional(),
+	purpose: PurposeChannelSchema.optional(),
+});
 // Input schemas for API calls
 export const ListContentByAgentInputSchema = z.object({
 	status: z
@@ -62,6 +111,9 @@ export const GetContentBySlugInputSchema = z.object({
 
 // Content select schema and type
 export const ContentSelectSchema = z.object({
+	agent: z.object({
+		personaConfig: PersonaConfigSchema,
+	}),
 	id: z.string(),
 	agentId: z.string(),
 	imageUrl: z.string().nullable(),
@@ -86,9 +138,13 @@ export const ContentListResponseSchema = z.object({
 	total: z.number(),
 });
 export type ContentList = z.infer<typeof ContentListResponseSchema>;
+// Related slugs response schema
+export const RelatedSlugsResponseSchema = z.array(z.string());
+
 // Exported types
 export type ContentStats = z.infer<typeof ContentStatsSchema>;
 export type ContentMeta = z.infer<typeof ContentMetaSchema>;
 export type ContentRequest = z.infer<typeof ContentRequestSchema>;
 export type ContentStatus = (typeof ContentStatusValues)[number];
 export type ContentSelect = z.infer<typeof ContentSelectSchema>;
+export type RelatedSlugsResponse = z.infer<typeof RelatedSlugsResponseSchema>;

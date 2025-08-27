@@ -97,6 +97,20 @@ const mockSlugResponse = {
 			json: {
 				id: "post1",
 				agentId,
+				agent: {
+					personaConfig: {
+						metadata: {
+							name: "Agent Name",
+							description: "Agent Description",
+						},
+						voice: {},
+						audience: {},
+						formatting: {},
+						language: {},
+						brand: {},
+						purpose: "blog_post",
+					},
+				},
 				imageUrl: null,
 				body: "Test body",
 				status: "draft",
@@ -143,6 +157,9 @@ describe("ContentaGenSDK.getContentBySlug", () => {
 			updatedAt: new Date(mockSlugResponse.result.data.json.updatedAt),
 		};
 		expect(result).toEqual(expected);
+		expect(result.agent).toBeDefined();
+		expect(result.agent.personaConfig).toBeDefined();
+		expect(result.agent.personaConfig.metadata.name).toBe("Agent Name");
 		expect(fetchMock).toHaveBeenCalledTimes(1);
 	});
 
@@ -159,6 +176,61 @@ describe("ContentaGenSDK.getContentBySlug", () => {
 			json: () => Promise.resolve({}),
 		});
 		await expect(sdk.getContentBySlug(validSlugInput)).rejects.toThrow(
+			/SDK_E002/,
+		);
+	});
+});
+
+// getRelatedSlugs tests
+const validRelatedInput = { slug: "test-title", agentId };
+const mockRelatedResponse = {
+	result: {
+		data: {
+			json: ["related-slug-1", "related-slug-2", "related-slug-3"],
+		},
+	},
+};
+
+describe("ContentaGenSDK.getRelatedSlugs", () => {
+	beforeEach(() => {
+		sdk = createSdk({ apiKey });
+		fetchMock = vi.fn().mockResolvedValue({
+			ok: true,
+			json: () => Promise.resolve(mockRelatedResponse),
+			statusText: "OK",
+		});
+		globalThis.fetch = fetchMock as unknown as typeof fetch;
+	});
+
+	afterEach(() => {
+		vi.restoreAllMocks();
+	});
+
+	it("returns array of related slugs for valid input", async () => {
+		const result = await sdk.getRelatedSlugs(validRelatedInput);
+		expect(result).toEqual([
+			"related-slug-1",
+			"related-slug-2",
+			"related-slug-3",
+		]);
+		expect(Array.isArray(result)).toBe(true);
+		expect(result.every((slug) => typeof slug === "string")).toBe(true);
+		expect(fetchMock).toHaveBeenCalledTimes(1);
+	});
+
+	it("throws on invalid input", async () => {
+		await expect(sdk.getRelatedSlugs({ slug: "", agentId })).rejects.toThrow(
+			/SDK_E004/,
+		);
+	});
+
+	it("throws on API error", async () => {
+		fetchMock.mockResolvedValueOnce({
+			ok: false,
+			statusText: "Internal Server Error",
+			json: () => Promise.resolve({}),
+		});
+		await expect(sdk.getRelatedSlugs(validRelatedInput)).rejects.toThrow(
 			/SDK_E002/,
 		);
 	});
