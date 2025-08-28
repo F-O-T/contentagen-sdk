@@ -2,6 +2,17 @@
 
 All notable changes to this package will be documented in this file.
 
+## [0.8.0] - 2025-08-27
+### Added
+- New `getAuthorByAgentId` procedure: fetches author name and profile photo by agent ID.
+- Tests for `getAuthorByAgentId`.
+
+### Breaking
+- `getContentBySlug` no longer returns the `agent` field in its response (schema change).
+
+### Changed
+- Updated and added tests for all procedures to ensure correct behavior and type safety.
+
 ## [0.7.0] - 2025-08-27
 ### Added
 - New `getRelatedSlugs` procedure: fetches related post slugs for a given content slug and agent ID.

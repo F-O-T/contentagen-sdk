@@ -109,11 +109,16 @@ export const GetContentBySlugInputSchema = z.object({
 	agentId: z.uuid("Invalid Agent ID format."),
 });
 
-// Content select schema and type
+// Author schema for getAuthorByAgentId
+export const AuthorByAgentIdSchema = z.object({
+	name: z.string(),
+	profilePhoto: z
+		.object({ image: z.string(), contentType: z.string() })
+		.nullable(),
+});
+
+// Content select schema and type (agent removed)
 export const ContentSelectSchema = z.object({
-	agent: z.object({
-		personaConfig: PersonaConfigSchema,
-	}),
 	id: z.string(),
 	agentId: z.string(),
 	imageUrl: z.string().nullable(),

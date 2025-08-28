@@ -1,6 +1,6 @@
-import { readChangelog, extractForVersion } from "./extract-changelog";
 import { execSync } from "child_process";
 import fs from "fs/promises";
+import { extractForVersion, readChangelog } from "./extract-changelog";
 
 export async function isVersionPublished(
 	pkgName: string,
