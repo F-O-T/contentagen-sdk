@@ -33,7 +33,15 @@ jobs:
       - name: Install dependencies
         run: bun install
 
-      - name: Publish to npm
+      - name: Set up npm auth
+        run: echo "//registry.npmjs.org/:_authToken=${NPM_TOKEN}" > ~/.npmrc
         env:
-          NODE_AUTH_TOKEN: ${{ secrets.NPM_TOKEN }}
+          NPM_TOKEN: ${{ secrets.NPM_TOKEN }}
+
+      - name: Publish to npm
         run: bun run scripts/publish-release.ts
+        env:
+          NPM_TOKEN: ${{ secrets.NPM_TOKEN }}
+
+      - name: Clean up npm auth
+        run: rm ~/.npmrc
