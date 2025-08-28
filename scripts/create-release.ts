@@ -1,8 +1,8 @@
 import {
-	readChangelog,
 	extractForVersion,
 	extractVersionFromPackageJson,
 	parseAllVersions,
+	readChangelog,
 } from "./extract-changelog";
 
 const GITHUB_API = "https://api.github.com";

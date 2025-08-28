@@ -151,15 +151,13 @@ describe("ContentaGenSDK.getContentBySlug", () => {
 
 	it("returns parsed content for valid input", async () => {
 		const result = await sdk.getContentBySlug(validSlugInput);
+		const { agent, ...rest } = mockSlugResponse.result.data.json;
 		const expected = {
-			...mockSlugResponse.result.data.json,
+			...rest,
 			createdAt: new Date(mockSlugResponse.result.data.json.createdAt),
 			updatedAt: new Date(mockSlugResponse.result.data.json.updatedAt),
 		};
 		expect(result).toEqual(expected);
-		expect(result.agent).toBeDefined();
-		expect(result.agent.personaConfig).toBeDefined();
-		expect(result.agent.personaConfig.metadata.name).toBe("Agent Name");
 		expect(fetchMock).toHaveBeenCalledTimes(1);
 	});
 
@@ -176,6 +174,61 @@ describe("ContentaGenSDK.getContentBySlug", () => {
 			json: () => Promise.resolve({}),
 		});
 		await expect(sdk.getContentBySlug(validSlugInput)).rejects.toThrow(
+			/SDK_E002/,
+		);
+	});
+});
+
+// getAuthorByAgentId tests
+const validAuthorInput = { agentId };
+const mockAuthorResponse = {
+	result: {
+		data: {
+			json: {
+				name: "Agent Name",
+				profilePhoto: {
+					image: "base64string",
+					contentType: "image/png",
+				},
+			},
+		},
+	},
+};
+
+describe("ContentaGenSDK.getAuthorByAgentId", () => {
+	beforeEach(() => {
+		sdk = createSdk({ apiKey });
+		fetchMock = vi.fn().mockResolvedValue({
+			ok: true,
+			json: () => Promise.resolve(mockAuthorResponse),
+			statusText: "OK",
+		});
+		globalThis.fetch = fetchMock as unknown as typeof fetch;
+	});
+
+	afterEach(() => {
+		vi.restoreAllMocks();
+	});
+
+	it("returns author info for valid input", async () => {
+		const result = await sdk.getAuthorByAgentId(validAuthorInput);
+		expect(result).toEqual(mockAuthorResponse.result.data.json);
+		expect(fetchMock).toHaveBeenCalledTimes(1);
+	});
+
+	it("throws on invalid input", async () => {
+		await expect(
+			sdk.getAuthorByAgentId({ agentId: "not-a-uuid" }),
+		).rejects.toThrow(/SDK_E004/);
+	});
+
+	it("throws on API error", async () => {
+		fetchMock.mockResolvedValueOnce({
+			ok: false,
+			statusText: "Internal Server Error",
+			json: () => Promise.resolve({}),
+		});
+		await expect(sdk.getAuthorByAgentId(validAuthorInput)).rejects.toThrow(
 			/SDK_E002/,
 		);
 	});

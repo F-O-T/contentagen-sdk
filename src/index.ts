@@ -2,6 +2,7 @@ import SuperJSON from "superjson";
 import { z } from "zod";
 import type { ContentList, ContentSelect } from "./types";
 import {
+	AuthorByAgentIdSchema,
 	ContentListResponseSchema,
 	ContentSelectSchema,
 	GetContentBySlugInputSchema,
@@ -32,6 +33,7 @@ export const TRPC_ENDPOINTS = {
 	listContentByAgent: "listContentByAgent",
 	getContentBySlug: "getContentBySlug",
 	getRelatedSlugs: "getRelatedSlugs",
+	getAuthorByAgentId: "getAuthorByAgentId",
 };
 
 const PRODUCTION_API_URL = "https://api.contentagen.com";
@@ -188,12 +190,36 @@ export class ContentaGenSDK {
 			throw error;
 		}
 	}
+
+	async getAuthorByAgentId(
+		params: Pick<z.input<typeof GetContentBySlugInputSchema>, "agentId">,
+	): Promise<z.infer<typeof AuthorByAgentIdSchema>> {
+		try {
+			const validatedParams = GetContentBySlugInputSchema.pick({
+				agentId: true,
+			}).parse(params);
+			return this._query(
+				TRPC_ENDPOINTS.getAuthorByAgentId,
+				validatedParams,
+				AuthorByAgentIdSchema,
+			);
+		} catch (error) {
+			if (error instanceof z.ZodError) {
+				const { code, message } = ERROR_CODES.INVALID_INPUT;
+				throw new Error(
+					`${code}: ${message} for getAuthorByAgentId: ${error.issues.map((e) => e.message).join(", ")}`,
+				);
+			}
+			throw error;
+		}
+	}
 }
 
 export const createSdk = (config: SdkConfig): ContentaGenSDK => {
 	return new ContentaGenSDK(config);
 };
 export {
+	AuthorByAgentIdSchema,
 	ContentListResponseSchema,
 	ContentSelectSchema,
 	GetContentBySlugInputSchema,

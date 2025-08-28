@@ -62,7 +62,7 @@ export function parseAllVersions(
 			const version = m[1];
 			const levelMatch = lines[i].match(/^(#+)/);
 			const headerLevel = levelMatch ? levelMatch[1].length : 2;
-			let start = i + 1;
+			const start = i + 1;
 			let end = lines.length;
 			const nextHeader = new RegExp(`^#{1,${headerLevel}}\\s+`);
 			for (let j = start; j < lines.length; j++) {
