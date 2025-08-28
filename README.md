@@ -2,11 +2,14 @@
 
 Official TypeScript SDK for interacting with the ContentaGen API.
 
-Features
-- Lightweight client.
-- Input validation with Zod schemas.
-- Automatic date parsing for `createdAt` / `updatedAt`.
-- Small, consistent error code surface.
+## Features
+- Lightweight client for ContentaGen API
+- Input validation with Zod schemas
+- Automatic date parsing for `createdAt` / `updatedAt`
+- Consistent error codes and robust error handling
+- Agents can be used as authors (author info is derived from the agent config)
+- New procedures: `getAuthorByAgentId`, `getRelatedSlugs`
+- All types and schemas exported for advanced usage
 
 ## Installation
 
@@ -20,7 +23,7 @@ yarn:
 yarn add @contentagen/sdk
 ```
 
-## Quick start (TypeScript)
+## Quick Start (TypeScript)
 
 ```ts
 import { createSdk } from "@contentagen/sdk";
@@ -29,14 +32,13 @@ import type { ContentList, ContentSelect } from "@contentagen/sdk";
 const sdk = createSdk({ apiKey: "YOUR_API_KEY" });
 
 async function example() {
-  // List content by agent
+  // List content by agent(s)
   const listParams = {
-    agentId: ["00000000-0000-0000-0000-000000000000"], // UUIDs
+    agentId: ["00000000-0000-0000-0000-000000000000"], // array of UUIDs
     status: ["approved", "draft"], // required array of statuses
     limit: 10, // optional, default 10
     page: 1, // optional, default 1
   };
-
   const list: ContentList = await sdk.listContentByAgent(listParams);
   console.log("total:", list.total);
   console.log("posts:", list.posts);
@@ -46,29 +48,44 @@ async function example() {
     slug: "my-post-slug",
     agentId: "00000000-0000-0000-0000-000000000000",
   };
-
   const post: ContentSelect = await sdk.getContentBySlug(selectParams);
   console.log(post.id, post.meta.title, post.createdAt);
+
+  // Get related slugs for a post
+  const relatedSlugs = await sdk.getRelatedSlugs({
+    slug: "my-post-slug",
+    agentId: "00000000-0000-0000-0000-000000000000",
+  });
+  console.log("Related slugs:", relatedSlugs);
+
+  // Get author info by agent ID
+  const author = await sdk.getAuthorByAgentId({
+    agentId: "00000000-0000-0000-0000-000000000000",
+  });
+  console.log("Author name:", author.name);
+  console.log("Profile photo:", author.profilePhoto?.image);
 }
 ```
 
 ## API
 
-Exports
-- `createSdk(config: { apiKey: string }): ContentaGenSDK` — factory that returns a new SDK instance.
-- `ContentaGenSDK` class — same methods available on instances.
-- Zod schemas re-exported for advanced usage:
+### Exports
+- `createSdk(config: { apiKey: string }): ContentaGenSDK` — factory for SDK instance
+- `ContentaGenSDK` class — all methods available on instances
+- Zod schemas for advanced validation:
   - `ContentListResponseSchema`
   - `ContentSelectSchema`
   - `GetContentBySlugInputSchema`
   - `ListContentByAgentInputSchema`
+  - `AuthorByAgentIdSchema`
+  - `RelatedSlugsResponseSchema`
 
 ### Methods
 
 - `sdk.listContentByAgent(params)`
   - params (validated by `ListContentByAgentInputSchema`):
     - `agentId`: string[] (UUIDs) — required
-    - `status`: ("draft" | "approved" )[] — required
+    - `status`: ("draft" | "approved")[] — required
     - `limit?: number` — optional, default 10, between 1 and 100
     - `page?: number` — optional, default 1, min 1
   - Returns: `Promise<ContentList>`
@@ -79,14 +96,23 @@ Exports
     - `agentId`: string (UUID) — required
   - Returns: `Promise<ContentSelect>`
 
-## Types (shapes)
+- `sdk.getRelatedSlugs(params)`
+  - params: `{ slug: string; agentId: string }`
+  - Returns: `Promise<string[]>` (array of related slugs)
+
+- `sdk.getAuthorByAgentId(params)`
+  - params: `{ agentId: string }`
+  - Returns: `{ name: string; profilePhoto: { image: string; contentType: string } | null }`
+  - Note: The agent serves as the author. The returned name and profile photo are derived directly from the agent config.
+
+## Types
 
 - ContentList
   - posts: Array of summary objects:
     - `id`: string
     - `meta`: { title?: string; description?: string; keywords?: string[]; slug?: string; sources?: string[] }
     - `imageUrl`: string | null
-    - `status`: "draft" | "approved"  
+    - `status`: "draft" | "approved"
     - `stats`: { wordsCount?: string; readTimeMinutes?: string; qualityScore?: string }
     - `createdAt`: Date
   - total: number
@@ -96,20 +122,27 @@ Exports
   - `agentId`: string
   - `imageUrl`: string | null
   - `body`: string
-  - `status`: "draft" | "approved"  
+  - `status`: "draft" | "approved"
   - `meta`: { title?: string; description?: string; keywords?: string[]; slug?: string; sources?: string[] }
   - `request`: { description: string }
   - `stats`: { wordsCount?: string; readTimeMinutes?: string; qualityScore?: string }
   - `createdAt`: Date
   - `updatedAt`: Date
 
-## Error codes
+- AuthorByAgentId
+  - `name`: string
+  - `profilePhoto`: { image: string; contentType: string } | null
+
+- RelatedSlugsResponse
+  - Array of strings (slugs)
+
+## Error Codes
 - `SDK_E001`: apiKey is required to initialize the ContentaGenSDK
 - `SDK_E002`: API request failed
-- `SDK_E003`: Invalid API response format.
-- `SDK_E004`: Invalid input.
+- `SDK_E003`: Invalid API response format
+- `SDK_E004`: Invalid input
 
-## Example with error handling
+## Example with Error Handling
 
 ```ts
 async function run() {
@@ -144,9 +177,8 @@ async function run() {
 ```
 
 ## Changelog
-
 See [CHANGELOG.md](./CHANGELOG.md) for version history and updates.
 
 ## License
-
 Apache License 2.0
+
