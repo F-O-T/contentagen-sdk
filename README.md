@@ -179,6 +179,11 @@ async function run() {
 ## Changelog
 See [CHANGELOG.md](./CHANGELOG.md) for version history and updates.
 
+
+## Star History
+
+[![Star History Chart](https://api.star-history.com/svg?repos=code-weavers/contentagen-sdk&type=Date)](https://www.star-history.com/#code-weavers/contentagen-sdk&Date)
+
 ## License
 Apache License 2.0
 
