@@ -13,7 +13,6 @@ All notable changes to this package will be documented in this file.
 - `createPostHogHelper()` factory function for creating PostHog tracking instances
 - `PostHogHelper.trackBlogPostView()` method for generating tracking scripts
 - Comprehensive tests for the PostHog helper functionality
-- `PostHogConfig` type for PostHog configuration options
 
 ### Changed
 - Moved PostHog helper to separate `posthog.ts` file for better organization

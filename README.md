@@ -72,7 +72,7 @@ async function example() {
 ### Exports
 - `createSdk(config: { apiKey: string }): ContentaGenSDK` — factory for SDK instance
 - `ContentaGenSDK` class — all methods available on instances
-- `createPostHogHelper(config: PostHogConfig): PostHogHelper` — factory for PostHog analytics helper
+- `createPostHogHelper(): PostHogHelper` — factory for PostHog analytics helper
 - `PostHogHelper` class — analytics tracking utilities for blog posts
 - Zod schemas for advanced validation:
   - `ContentListResponseSchema`
@@ -116,6 +116,13 @@ The SDK includes a PostHog helper for tracking blog post views and custom events
 - `posthogHelper.trackBlogPostView(postData)`
   - params: `{ id: string; slug: string; title?: string; agentId: string }`
   - Returns: `string` — HTML script tag to track a blog post view event
+
+#### Event payload
+
+- Includes stable identifiers for the post (`post_id`, `post_slug`) and agent (`agent_id`).
+- May include optional metadata such as `post_title`.
+- Includes event classification fields and a timestamp.
+- Note: Exact keys may evolve; check release notes for changes.
 
 ## Types
 
@@ -192,17 +199,10 @@ async function run() {
 
 ```ts
 import { createSdk, createPostHogHelper } from "@contentagen/sdk";
-import type { PostHogConfig } from "@contentagen/sdk";
 
 const sdk = createSdk({ apiKey: "YOUR_API_KEY" });
 
-// Configure PostHog
-const posthogConfig: PostHogConfig = {
-  apiKey: "YOUR_POSTHOG_API_KEY",
-  apiHost: "https://app.posthog.com", // optional, defaults to PostHog Cloud
-};
-
-const posthogHelper = createPostHogHelper(posthogConfig);
+const posthogHelper = createPostHogHelper();
 
 // Example usage in AstroJS or other build-time frameworks
 async function renderBlogPost(slug: string, agentId: string) {
