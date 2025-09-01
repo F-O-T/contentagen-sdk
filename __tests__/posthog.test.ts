@@ -30,6 +30,8 @@ describe("PostHogHelper", () => {
 			expect(script).toContain('"agent_id":"agent-456"');
 			expect(script).toContain('"event_type":"blog_post_view"');
 			expect(script).toContain('"timestamp"');
+			// Verify JSON is properly escaped
+			expect(script).toContain("posthog.capture('blog_post_view', {");
 		});
 
 		it("handles post without title", () => {
@@ -69,7 +71,7 @@ describe("PostHogHelper", () => {
 			);
 		});
 
-		it("generates valid JSON in the script", () => {
+		it("generates valid escaped JSON in the script", () => {
 			const postData = {
 				id: "post-123",
 				slug: "my-awesome-post",
@@ -88,8 +90,18 @@ describe("PostHogHelper", () => {
 			);
 			expect(captureCall).toBeTruthy();
 
-			// Should not throw when parsing
-			expect(() => JSON.parse(captureCall?.[1] || "{}")).not.toThrow();
+			// Should not throw when parsing the escaped JSON
+			const escapedJson = captureCall?.[1] || "{}";
+			expect(() => JSON.parse(escapedJson)).not.toThrow();
+
+			// Verify the JSON contains expected structure
+			const parsed = JSON.parse(escapedJson);
+			expect(parsed).toHaveProperty("post_id", "post-123");
+			expect(parsed).toHaveProperty("post_slug", "my-awesome-post");
+			expect(parsed).toHaveProperty("post_title", "My Awesome Post");
+			expect(parsed).toHaveProperty("agent_id", "agent-456");
+			expect(parsed).toHaveProperty("event_type", "blog_post_view");
+			expect(parsed).toHaveProperty("timestamp");
 		});
 
 		it("handles special characters in title", () => {
@@ -103,7 +115,7 @@ describe("PostHogHelper", () => {
 			const script = helper.trackBlogPostView(postData);
 
 			expect(script).toContain(
-				'"post_title":"My \\"Awesome\\" Post with \'quotes\' and <tags>"',
+				'"post_title":"My \\"Awesome\\" Post with \'quotes\' and \\u003Ctags\\u003E"',
 			);
 		});
 

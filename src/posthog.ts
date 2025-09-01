@@ -1,7 +1,3 @@
-/**
- * PostHog Analytics Helper for Blog Post Tracking
- * Generates tracking code for blog post views in build-time frameworks like AstroJS
- */
 export class PostHogHelper {
 	trackBlogPostView(postData: {
 		id: string;
@@ -18,9 +14,16 @@ export class PostHogHelper {
 			timestamp: new Date().toISOString(),
 		};
 
+		const payloadJson = JSON.stringify(eventData)
+			.replace(/</g, "\\u003C")
+			.replace(/>/g, "\\u003E")
+			.replace(/&/g, "\\u0026")
+			.replace(/\u2028/g, "\\u2028")
+			.replace(/\u2029/g, "\\u2029");
+
 		return `<script>
   if (typeof posthog !== 'undefined') {
-    posthog.capture('blog_post_view', ${JSON.stringify(eventData)});
+    posthog.capture('blog_post_view', ${payloadJson});
   }
 </script>`;
 	}
