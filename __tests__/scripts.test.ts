@@ -90,7 +90,7 @@ describe("create-release", () => {
 					const u = String(url);
 					const method = opts?.method || "GET";
 					// simulate GET release tag checks
-					if (u.includes("/releases/tags/1.1.0") && method === "GET") {
+					if (u.includes("/releases/tags/v1.1.0") && method === "GET") {
 						return {
 							ok: false,
 							status: 404,
@@ -98,7 +98,7 @@ describe("create-release", () => {
 							text: async () => JSON.stringify({ message: "Not Found" }),
 						};
 					}
-					if (u.includes("/releases/tags/1.0.0") && method === "GET") {
+					if (u.includes("/releases/tags/v1.0.0") && method === "GET") {
 						return {
 							ok: true,
 							status: 200,
@@ -106,7 +106,7 @@ describe("create-release", () => {
 							text: async () => JSON.stringify({ id: 111 }),
 						};
 					}
-					if (u.includes("/releases/tags/0.9.0") && method === "GET") {
+					if (u.includes("/releases/tags/v0.9.0") && method === "GET") {
 						return {
 							ok: true,
 							status: 200,

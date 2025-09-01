@@ -2,6 +2,13 @@
 
 All notable changes to this package will be documented in this file.
 
+## [0.9.2] - 2025-09-01
+
+### Fixed
+- Fixed release script edge case where `extractForVersion` could match partial versions (e.g., searching for "0.9" would incorrectly match "0.9.1" or "0.9.0")
+- Fixed backfill mode tag naming inconsistency - now consistently uses "v" prefixed tags for all releases
+- Improved version extraction to use exact matching instead of regex partial matching
+
 ## [0.9.1] - 2025-09-01
 ### Security
 - Fixed XSS/script-breakout vulnerability in PostHog helper by properly escaping JSON before injection into script tags

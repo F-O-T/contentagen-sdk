@@ -11,33 +11,11 @@ export function extractForVersion(
 	version: string,
 ): string | null {
 	if (!changelogText) return null;
-	const escaped = version.replace(/[.*+?^${}()|[\]\\]/g, "\\$&");
-	const headerRegex = new RegExp(`^##+\\s*\\[?${escaped}\\]?\\b.*$`, "m");
-	const lines = changelogText.split(/\r?\n/);
 
-	let start = -1;
-	let headerLevel = 0;
-	for (let i = 0; i < lines.length; i++) {
-		if (headerRegex.test(lines[i])) {
-			start = i + 1;
-			const m = lines[i].match(/^(#+)/);
-			headerLevel = m ? m[1].length : 2;
-			break;
-		}
-	}
-	if (start === -1) return null;
-
-	let end = lines.length;
-	const nextHeader = new RegExp(`^#{1,${headerLevel}}\\s+`);
-	for (let i = start; i < lines.length; i++) {
-		if (nextHeader.test(lines[i])) {
-			end = i;
-			break;
-		}
-	}
-
-	const block = lines.slice(start, end).join("\n").trim();
-	return block || null;
+	// Use parseAllVersions to get all entries, then find exact match
+	const entries = parseAllVersions(changelogText);
+	const entry = entries.find((e) => e.version === version);
+	return entry ? entry.body : null;
 }
 
 export async function extractVersionFromPackageJson(
