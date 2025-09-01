@@ -2,6 +2,26 @@
 
 All notable changes to this package will be documented in this file.
 
+## [0.9.1] - 2025-09-01
+### Security
+- Fixed XSS/script-breakout vulnerability in PostHog helper by properly escaping JSON before injection into script tags
+- Added comprehensive input sanitization to prevent script injection attacks
+
+## [0.9.0] - 2025-09-01
+### Added
+- New PostHog analytics helper for tracking blog post views in build-time frameworks like AstroJS
+- `createPostHogHelper()` factory function for creating PostHog tracking instances
+- `PostHogHelper.trackBlogPostView()` method for generating tracking scripts
+- Comprehensive tests for the PostHog helper functionality
+
+### Changed
+- Moved PostHog helper to separate `posthog.ts` file for better organization
+- Simplified PostHog configuration to only require API key and optional host
+- Reduced bundle size by removing unnecessary PostHog initialization code
+
+### Security
+- Fixed XSS/script-breakout vulnerability in PostHog helper by properly escaping JSON before injection into script tags
+
 ## [0.8.0] - 2025-08-27
 ### Added
 - New `getAuthorByAgentId` procedure: fetches author name and profile photo by agent ID.

@@ -1,6 +1,6 @@
 {
 	"name": "@contentagen/sdk",
-	"version": "0.8.0",
+	"version": "0.9.1",
 	"private": false,
 	"type": "module",
 	"description": "Official TypeScript SDK to interact with the ContentaGen API. Provides lightweight client methods for listing and retrieving content, automatic input validation, date parsing, and robust error handling.",

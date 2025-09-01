@@ -72,6 +72,8 @@ async function example() {
 ### Exports
 - `createSdk(config: { apiKey: string }): ContentaGenSDK` — factory for SDK instance
 - `ContentaGenSDK` class — all methods available on instances
+- `createPostHogHelper(): PostHogHelper` — factory for PostHog analytics helper
+- `PostHogHelper` class — analytics tracking utilities for blog posts
 - Zod schemas for advanced validation:
   - `ContentListResponseSchema`
   - `ContentSelectSchema`
@@ -104,6 +106,23 @@ async function example() {
   - params: `{ agentId: string }`
   - Returns: `{ name: string; profilePhoto: { image: string; contentType: string } | null }`
   - Note: The agent serves as the author. The returned name and profile photo are derived directly from the agent config.
+
+### PostHog Analytics Helper
+
+The SDK includes a PostHog helper for tracking blog post views and custom events, designed for build-time frameworks like AstroJS.
+
+#### PostHogHelper Methods
+
+- `posthogHelper.trackBlogPostView(postData)`
+  - params: `{ id: string; slug: string; title?: string; agentId: string }`
+  - Returns: `string` — HTML script tag to track a blog post view event
+
+#### Event payload
+
+- Includes stable identifiers for the post (`post_id`, `post_slug`) and agent (`agent_id`).
+- May include optional metadata such as `post_title`.
+- Includes event classification fields and a timestamp.
+- Note: Exact keys may evolve; check release notes for changes.
 
 ## Types
 
@@ -173,6 +192,36 @@ async function run() {
   } catch (err) {
     console.error("SDK error:", err);
   }
+}
+```
+
+## PostHog Analytics Example
+
+```ts
+import { createSdk, createPostHogHelper } from "@contentagen/sdk";
+
+const sdk = createSdk({ apiKey: "YOUR_API_KEY" });
+
+const posthogHelper = createPostHogHelper();
+
+// Example usage in AstroJS or other build-time frameworks
+async function renderBlogPost(slug: string, agentId: string) {
+  // Get post data
+  const post = await sdk.getContentBySlug({ slug, agentId });
+
+  // Generate tracking script for blog post view
+  const trackViewScript = posthogHelper.trackBlogPostView({
+    id: post.id,
+    slug: post.meta.slug || slug,
+    title: post.meta.title,
+    agentId: post.agentId,
+  });
+
+  // In AstroJS, inject the tracking script into the page
+  return {
+    trackingScript: trackViewScript,
+    post,
+  };
 }
 ```
 

@@ -97,20 +97,6 @@ const mockSlugResponse = {
 			json: {
 				id: "post1",
 				agentId,
-				agent: {
-					personaConfig: {
-						metadata: {
-							name: "Agent Name",
-							description: "Agent Description",
-						},
-						voice: {},
-						audience: {},
-						formatting: {},
-						language: {},
-						brand: {},
-						purpose: "blog_post",
-					},
-				},
 				imageUrl: null,
 				body: "Test body",
 				status: "draft",
@@ -151,7 +137,7 @@ describe("ContentaGenSDK.getContentBySlug", () => {
 
 	it("returns parsed content for valid input", async () => {
 		const result = await sdk.getContentBySlug(validSlugInput);
-		const { agent, ...rest } = mockSlugResponse.result.data.json;
+		const { ...rest } = mockSlugResponse.result.data.json;
 		const expected = {
 			...rest,
 			createdAt: new Date(mockSlugResponse.result.data.json.createdAt),
