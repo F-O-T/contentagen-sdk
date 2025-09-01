@@ -78,7 +78,7 @@ export async function run() {
 		const entries = parseAllVersions(changelog);
 		for (const e of entries) {
 			const ver = e.version;
-			const tagName = ver; // use exact version as tag and name
+			const tagName = `v${ver}`; // use v-prefixed version as tag and name
 			const listUrl = `${GITHUB_API}/repos/${owner}/${repo}/releases/tags/${tagName}`;
 			try {
 				await githubFetch(listUrl, "GET", null, token);
