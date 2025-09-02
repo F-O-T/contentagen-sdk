@@ -6,6 +6,7 @@ import {
 	ContentListResponseSchema,
 	ContentSelectSchema,
 	GetContentBySlugInputSchema,
+	ImageSchema,
 	ListContentByAgentInputSchema,
 	RelatedSlugsResponseSchema,
 } from "./types";
@@ -34,6 +35,7 @@ export const TRPC_ENDPOINTS = {
 	getContentBySlug: "getContentBySlug",
 	getRelatedSlugs: "getRelatedSlugs",
 	getAuthorByAgentId: "getAuthorByAgentId",
+	getContentImage: "getContentImage",
 };
 
 const PRODUCTION_API_URL = "https://api.contentagen.com";
@@ -213,6 +215,29 @@ export class ContentaGenSDK {
 			throw error;
 		}
 	}
+
+	async getContentImage(params: {
+		contentId: string;
+	}): Promise<z.infer<typeof ImageSchema>> {
+		try {
+			const validatedParams = z
+				.object({ contentId: z.string().min(1, "Content ID is required") })
+				.parse(params);
+			return this._query(
+				TRPC_ENDPOINTS.getContentImage,
+				validatedParams,
+				ImageSchema,
+			);
+		} catch (error) {
+			if (error instanceof z.ZodError) {
+				const { code, message } = ERROR_CODES.INVALID_INPUT;
+				throw new Error(
+					`${code}: ${message} for getContentImage: ${error.issues.map((e) => e.message).join(", ")}`,
+				);
+			}
+			throw error;
+		}
+	}
 }
 
 export const createSdk = (config: SdkConfig): ContentaGenSDK => {
@@ -223,5 +248,6 @@ export {
 	ContentListResponseSchema,
 	ContentSelectSchema,
 	GetContentBySlugInputSchema,
+	ImageSchema,
 	ListContentByAgentInputSchema,
 } from "./types";

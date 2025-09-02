@@ -28,6 +28,7 @@ const mockListResponse = {
 							sources: ["source1"],
 						},
 						imageUrl: null,
+						image: null,
 						status: "draft",
 						createdAt: new Date().toISOString(),
 						stats: {
@@ -98,6 +99,7 @@ const mockSlugResponse = {
 				id: "post1",
 				agentId,
 				imageUrl: null,
+				image: null,
 				body: "Test body",
 				status: "draft",
 				meta: {
@@ -173,7 +175,7 @@ const mockAuthorResponse = {
 			json: {
 				name: "Agent Name",
 				profilePhoto: {
-					image: "base64string",
+					data: "base64string",
 					contentType: "image/png",
 				},
 			},
@@ -270,6 +272,75 @@ describe("ContentaGenSDK.getRelatedSlugs", () => {
 			json: () => Promise.resolve({}),
 		});
 		await expect(sdk.getRelatedSlugs(validRelatedInput)).rejects.toThrow(
+			/SDK_E002/,
+		);
+	});
+});
+
+// getContentImage tests
+const validContentImageInput = { contentId: "content-123" };
+const mockContentImageResponse = {
+	result: {
+		data: {
+			json: {
+				data: "base64imagedata",
+				contentType: "image/jpeg",
+			},
+		},
+	},
+};
+
+describe("ContentaGenSDK.getContentImage", () => {
+	beforeEach(() => {
+		sdk = createSdk({ apiKey });
+		fetchMock = vi.fn().mockResolvedValue({
+			ok: true,
+			json: () => Promise.resolve(mockContentImageResponse),
+			statusText: "OK",
+		});
+		globalThis.fetch = fetchMock as unknown as typeof fetch;
+	});
+
+	afterEach(() => {
+		vi.restoreAllMocks();
+	});
+
+	it("returns image data for valid input", async () => {
+		const result = await sdk.getContentImage(validContentImageInput);
+		expect(result).toEqual(mockContentImageResponse.result.data.json);
+		expect(fetchMock).toHaveBeenCalledTimes(1);
+	});
+
+	it("returns null when no image exists", async () => {
+		const nullResponse = {
+			result: {
+				data: {
+					json: null,
+				},
+			},
+		};
+		fetchMock.mockResolvedValueOnce({
+			ok: true,
+			json: () => Promise.resolve(nullResponse),
+			statusText: "OK",
+		});
+		const result = await sdk.getContentImage(validContentImageInput);
+		expect(result).toBeNull();
+	});
+
+	it("throws on invalid input", async () => {
+		await expect(sdk.getContentImage({ contentId: "" })).rejects.toThrow(
+			/SDK_E004/,
+		);
+	});
+
+	it("throws on API error", async () => {
+		fetchMock.mockResolvedValueOnce({
+			ok: false,
+			statusText: "Internal Server Error",
+			json: () => Promise.resolve({}),
+		});
+		await expect(sdk.getContentImage(validContentImageInput)).rejects.toThrow(
 			/SDK_E002/,
 		);
 	});

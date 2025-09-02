@@ -2,6 +2,18 @@
 
 All notable changes to this package will be documented in this file.
 
+## [0.10.0] - 2025-09-02
+
+### Added
+- New `getContentImage` procedure: fetches image data for a specific content ID
+- Enhanced image support across all content-related procedures with consistent `ImageSchema` format
+- Comprehensive tests for the new `getContentImage` functionality
+
+### Changed
+- Updated all content-related schemas to include image data fields
+- Improved type safety with consistent image data structure (`{ data: string, contentType: string }`)
+- Enhanced `getAuthorByAgentId` to return profile photos in the new image format
+
 ## [0.9.2] - 2025-09-01
 
 ### Fixed

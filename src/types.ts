@@ -109,12 +109,18 @@ export const GetContentBySlugInputSchema = z.object({
 	agentId: z.uuid("Invalid Agent ID format."),
 });
 
+// Reusable image schema for SDK responses
+export const ImageSchema = z
+	.object({
+		data: z.string(),
+		contentType: z.string(),
+	})
+	.nullable();
+
 // Author schema for getAuthorByAgentId
 export const AuthorByAgentIdSchema = z.object({
 	name: z.string(),
-	profilePhoto: z
-		.object({ image: z.string(), contentType: z.string() })
-		.nullable(),
+	profilePhoto: ImageSchema,
 });
 
 // Content select schema and type (agent removed)
@@ -129,6 +135,7 @@ export const ContentSelectSchema = z.object({
 	stats: ContentStatsSchema,
 	createdAt: z.date(),
 	updatedAt: z.date(),
+	image: ImageSchema,
 });
 
 export const ContentListResponseSchema = z.object({
@@ -139,7 +146,11 @@ export const ContentListResponseSchema = z.object({
 		status: true,
 		createdAt: true,
 		stats: true,
-	}).array(),
+	})
+		.extend({
+			image: ImageSchema,
+		})
+		.array(),
 	total: z.number(),
 });
 export type ContentList = z.infer<typeof ContentListResponseSchema>;
@@ -153,3 +164,4 @@ export type ContentRequest = z.infer<typeof ContentRequestSchema>;
 export type ContentStatus = (typeof ContentStatusValues)[number];
 export type ContentSelect = z.infer<typeof ContentSelectSchema>;
 export type RelatedSlugsResponse = z.infer<typeof RelatedSlugsResponseSchema>;
+export type Image = z.infer<typeof ImageSchema>;
