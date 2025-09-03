@@ -2,6 +2,12 @@
 
 All notable changes to this package will be documented in this file.
 
+## [0.11.0] - 2025-09-03
+
+### Added
+- New `shareStatus` field added to content type and schemas
+- Enhanced content data structure to support share status tracking
+
 ## [0.10.0] - 2025-09-02
 
 ### Added
