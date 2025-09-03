@@ -30,6 +30,7 @@ const mockListResponse = {
 						imageUrl: null,
 						image: null,
 						status: "draft",
+						shareStatus: "private",
 						createdAt: new Date().toISOString(),
 						stats: {
 							wordsCount: "100",
@@ -102,6 +103,7 @@ const mockSlugResponse = {
 				image: null,
 				body: "Test body",
 				status: "draft",
+				shareStatus: "private",
 				meta: {
 					title: "Test Title",
 					slug: "test-title",

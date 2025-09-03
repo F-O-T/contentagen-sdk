@@ -43,6 +43,9 @@ export const ContentRequestSchema = z.object({
 // Content status enum values
 export const ContentStatusValues = ["draft", "approved"] as const;
 
+// Share status enum values
+export const ShareStatusValues = ["private", "public"] as const;
+
 export const VoiceConfigSchema = z.object({
 	communication: z.enum(["first_person", "third_person"]),
 });
@@ -130,6 +133,7 @@ export const ContentSelectSchema = z.object({
 	imageUrl: z.string().nullable(),
 	body: z.string(),
 	status: z.enum(ContentStatusValues),
+	shareStatus: z.enum(ShareStatusValues),
 	meta: ContentMetaSchema,
 	request: ContentRequestSchema,
 	stats: ContentStatsSchema,
@@ -144,6 +148,7 @@ export const ContentListResponseSchema = z.object({
 		meta: true,
 		imageUrl: true,
 		status: true,
+		shareStatus: true,
 		createdAt: true,
 		stats: true,
 	})
@@ -162,6 +167,7 @@ export type ContentStats = z.infer<typeof ContentStatsSchema>;
 export type ContentMeta = z.infer<typeof ContentMetaSchema>;
 export type ContentRequest = z.infer<typeof ContentRequestSchema>;
 export type ContentStatus = (typeof ContentStatusValues)[number];
+export type ShareStatus = (typeof ShareStatusValues)[number];
 export type ContentSelect = z.infer<typeof ContentSelectSchema>;
 export type RelatedSlugsResponse = z.infer<typeof RelatedSlugsResponseSchema>;
 export type Image = z.infer<typeof ImageSchema>;

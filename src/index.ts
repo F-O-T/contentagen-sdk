@@ -1,6 +1,6 @@
 import SuperJSON from "superjson";
 import { z } from "zod";
-import type { ContentList, ContentSelect } from "./types";
+import type { ContentList, ContentSelect, ShareStatus } from "./types";
 import {
 	AuthorByAgentIdSchema,
 	ContentListResponseSchema,
@@ -9,6 +9,7 @@ import {
 	ImageSchema,
 	ListContentByAgentInputSchema,
 	RelatedSlugsResponseSchema,
+	ShareStatusValues,
 } from "./types";
 
 export const ERROR_CODES = {
@@ -243,6 +244,8 @@ export class ContentaGenSDK {
 export const createSdk = (config: SdkConfig): ContentaGenSDK => {
 	return new ContentaGenSDK(config);
 };
+
+export type { ShareStatus } from "./types";
 export {
 	AuthorByAgentIdSchema,
 	ContentListResponseSchema,
@@ -250,4 +253,5 @@ export {
 	GetContentBySlugInputSchema,
 	ImageSchema,
 	ListContentByAgentInputSchema,
+	ShareStatusValues,
 } from "./types";

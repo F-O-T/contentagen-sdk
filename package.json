@@ -1,12 +1,12 @@
 {
 	"name": "@contentagen/sdk",
-	"version": "0.10.0",
+	"version": "0.11.0",
 	"private": false,
 	"type": "module",
 	"description": "Official TypeScript SDK to interact with the ContentaGen API. Provides lightweight client methods for listing and retrieving content, automatic input validation, date parsing, and robust error handling.",
 	"repository": {
 		"type": "git",
-		"url": "git+https://github.com/code-weavers/contentagen-sdk.git"
+		"url": "git+https://github.com/F-O-T/contentagen-sdk.git"
 	},
 	"exports": {
 		".": {
