@@ -8,8 +8,8 @@ Official TypeScript SDK for interacting with the ContentaGen API.
 - Automatic date parsing for `createdAt` / `updatedAt`
 - Consistent error codes and robust error handling
 - Agents can be used as authors (author info is derived from the agent config)
-- New procedures: `getAuthorByAgentId`, `getRelatedSlugs`
-- All types and schemas exported for advanced usage
+- New procedures: `getAuthorByAgentId`, `getRelatedSlugs`, `getContentImage`
+- Selected schemas and types exported for advanced usage
 
 ## Installation
 
@@ -27,43 +27,40 @@ yarn add @contentagen/sdk
 
 ```ts
 import { createSdk } from "@contentagen/sdk";
-import type { ContentList, ContentSelect } from "@contentagen/sdk";
 
 const sdk = createSdk({ apiKey: "YOUR_API_KEY" });
 
 async function example() {
-  // List content by agent(s)
-  const listParams = {
-    agentId: ["00000000-0000-0000-0000-000000000000"], // array of UUIDs
-    status: ["approved", "draft"], // required array of statuses
-    limit: 10, // optional, default 10
-    page: 1, // optional, default 1
-  };
-  const list: ContentList = await sdk.listContentByAgent(listParams);
-  console.log("total:", list.total);
-  console.log("posts:", list.posts);
+	const agentId = "00000000-0000-0000-0000-000000000000";
 
-  // Get content by slug
-  const selectParams = {
-    slug: "my-post-slug",
-    agentId: "00000000-0000-0000-0000-000000000000",
-  };
-  const post: ContentSelect = await sdk.getContentBySlug(selectParams);
-  console.log(post.id, post.meta.title, post.createdAt);
+	// List content by agent(s)
+	const listParams = {
+		agentId: [agentId], // array of UUIDs
+		status: ["approved", "draft"], // required array of statuses
+		limit: 10, // optional, default 10
+		page: 1, // optional, default 1
+	};
+	const list = await sdk.listContentByAgent(listParams);
+	console.log("total:", list.total);
+	console.log("first post summary:", list.posts[0]);
 
-  // Get related slugs for a post
-  const relatedSlugs = await sdk.getRelatedSlugs({
-    slug: "my-post-slug",
-    agentId: "00000000-0000-0000-0000-000000000000",
-  });
-  console.log("Related slugs:", relatedSlugs);
+	// Get content by slug (use the same agentId you queried with)
+	const selectParams = { slug: "my-post-slug", agentId };
+	const post = await sdk.getContentBySlug(selectParams);
+	console.log(post.id, post.meta.title, post.createdAt, post.shareStatus);
 
-  // Get author info by agent ID
-  const author = await sdk.getAuthorByAgentId({
-    agentId: "00000000-0000-0000-0000-000000000000",
-  });
-  console.log("Author name:", author.name);
-  console.log("Profile photo:", author.profilePhoto?.image);
+	// Get related slugs for a post
+	const relatedSlugs = await sdk.getRelatedSlugs({ slug: "my-post-slug", agentId });
+	console.log("Related slugs:", relatedSlugs);
+
+	// Get author info by agent ID
+	const author = await sdk.getAuthorByAgentId({ agentId });
+	console.log("Author name:", author.name);
+	console.log("Profile photo:", author.profilePhoto?.contentType);
+
+	// Get the image data for a specific content ID
+	const image = await sdk.getContentImage({ contentId: post.id });
+	console.log("Post image:", image?.contentType, image?.data.length);
 }
 ```
 
@@ -72,15 +69,17 @@ async function example() {
 ### Exports
 - `createSdk(config: { apiKey: string }): ContentaGenSDK` — factory for SDK instance
 - `ContentaGenSDK` class — all methods available on instances
-- `createPostHogHelper(): PostHogHelper` — factory for PostHog analytics helper
-- `PostHogHelper` class — analytics tracking utilities for blog posts
+- `type ShareStatus` — union type: `"private" | "public"`
 - Zod schemas for advanced validation:
   - `ContentListResponseSchema`
   - `ContentSelectSchema`
   - `GetContentBySlugInputSchema`
   - `ListContentByAgentInputSchema`
   - `AuthorByAgentIdSchema`
-  - `RelatedSlugsResponseSchema`
+  - `ImageSchema`
+  - `ShareStatusValues`
+
+Note: The PostHog helper is currently internal and not exported from the package entry. See "PostHog Analytics Helper" below for usage details when working inside this repository.
 
 ### Methods
 
@@ -90,13 +89,13 @@ async function example() {
     - `status`: ("draft" | "approved")[] — required
     - `limit?: number` — optional, default 10, between 1 and 100
     - `page?: number` — optional, default 1, min 1
-  - Returns: `Promise<ContentList>`
+  - Returns: `Promise<{ posts: Array<{ id, meta, imageUrl, status, shareStatus, createdAt, stats, image }>; total: number }>`
 
 - `sdk.getContentBySlug(params)`
   - params (validated by `GetContentBySlugInputSchema`):
     - `slug`: string — required
     - `agentId`: string (UUID) — required
-  - Returns: `Promise<ContentSelect>`
+  - Returns: `Promise<ContentSelect-like object>` (see Types below)
 
 - `sdk.getRelatedSlugs(params)`
   - params: `{ slug: string; agentId: string }`
@@ -104,12 +103,24 @@ async function example() {
 
 - `sdk.getAuthorByAgentId(params)`
   - params: `{ agentId: string }`
-  - Returns: `{ name: string; profilePhoto: { image: string; contentType: string } | null }`
+  - Returns: `{ name: string; profilePhoto: { data: string; contentType: string } | null }`
   - Note: The agent serves as the author. The returned name and profile photo are derived directly from the agent config.
+
+- `sdk.getContentImage(params)`
+  - params: `{ contentId: string }`
+  - Returns: `{ data: string; contentType: string } | null`
 
 ### PostHog Analytics Helper
 
-The SDK includes a PostHog helper for tracking blog post views and custom events, designed for build-time frameworks like AstroJS.
+The codebase includes a PostHog helper for tracking blog post views and custom events, designed for build-time frameworks like AstroJS.
+
+Note: In v0.11.0 the helper is not exported through the package entry. If you are working inside this repo (or until a public export is added), import it directly from the source file.
+
+#### Import (internal use in this repo)
+
+```ts
+import { createPostHogHelper } from "./src/posthog"; // not exported from the package entry yet
+```
 
 #### PostHogHelper Methods
 
@@ -122,9 +133,11 @@ The SDK includes a PostHog helper for tracking blog post views and custom events
 - Includes stable identifiers for the post (`post_id`, `post_slug`) and agent (`agent_id`).
 - May include optional metadata such as `post_title`.
 - Includes event classification fields and a timestamp.
-- Note: Exact keys may evolve; check release notes for changes.
+- Security: JSON payload is escaped for safe HTML injection.
 
 ## Types
+
+Shapes shown here reflect the runtime Zod schemas returned by the SDK. Only `ShareStatus` is exported as a type; use the schemas above for runtime validation if needed.
 
 - ContentList
   - posts: Array of summary objects:
@@ -132,8 +145,10 @@ The SDK includes a PostHog helper for tracking blog post views and custom events
     - `meta`: { title?: string; description?: string; keywords?: string[]; slug?: string; sources?: string[] }
     - `imageUrl`: string | null
     - `status`: "draft" | "approved"
+    - `shareStatus`: "private" | "public"
     - `stats`: { wordsCount?: string; readTimeMinutes?: string; qualityScore?: string }
     - `createdAt`: Date
+    - `image`: { data: string; contentType: string } | null
   - total: number
 
 - ContentSelect
@@ -142,18 +157,23 @@ The SDK includes a PostHog helper for tracking blog post views and custom events
   - `imageUrl`: string | null
   - `body`: string
   - `status`: "draft" | "approved"
+  - `shareStatus`: "private" | "public"
   - `meta`: { title?: string; description?: string; keywords?: string[]; slug?: string; sources?: string[] }
   - `request`: { description: string }
   - `stats`: { wordsCount?: string; readTimeMinutes?: string; qualityScore?: string }
   - `createdAt`: Date
   - `updatedAt`: Date
+  - `image`: { data: string; contentType: string } | null
 
 - AuthorByAgentId
   - `name`: string
-  - `profilePhoto`: { image: string; contentType: string } | null
+  - `profilePhoto`: { data: string; contentType: string } | null
 
 - RelatedSlugsResponse
   - Array of strings (slugs)
+
+- ShareStatus
+  - `"private" | "public"`
 
 ## Error Codes
 - `SDK_E001`: apiKey is required to initialize the ContentaGenSDK
@@ -165,63 +185,65 @@ The SDK includes a PostHog helper for tracking blog post views and custom events
 
 ```ts
 async function run() {
-  try {
-    const sdk = createSdk({ apiKey: process.env.CONTENTAGEN_API_KEY! });
+	try {
+		const sdk = createSdk({ apiKey: process.env.CONTENTAGEN_API_KEY! });
 
-    const list = await sdk.listContentByAgent({
-      agentId: ["00000000-0000-0000-0000-000000000000"],
-      status: ["approved"],
-      limit: 5,
-      page: 1,
-    });
+		const agentId = "00000000-0000-0000-0000-000000000000";
 
-    if (list.total === 0) {
-      console.log("No posts found");
-      return;
-    }
+		const list = await sdk.listContentByAgent({
+			agentId: [agentId],
+			status: ["approved"],
+			limit: 5,
+			page: 1,
+		});
 
-    const first = list.posts[0];
-    console.log("First post id:", first.id);
+		if (list.total === 0) {
+			console.log("No posts found");
+			return;
+		}
 
-    const post = await sdk.getContentBySlug({
-      slug: first.meta.slug ?? "unknown-slug",
-      agentId: first.agentId || "00000000-0000-0000-0000-000000000000",
-    });
+		const first = list.posts[0];
+		console.log("First post id:", first.id);
 
-    console.log("Post body:", post.body);
-  } catch (err) {
-    console.error("SDK error:", err);
-  }
+		const post = await sdk.getContentBySlug({
+			slug: first.meta.slug ?? "unknown-slug",
+			agentId,
+		});
+
+		console.log("Post body:", post.body);
+	} catch (err) {
+		console.error("SDK error:", err);
+	}
 }
 ```
 
-## PostHog Analytics Example
+## PostHog Analytics Example (internal import in this repo)
 
 ```ts
-import { createSdk, createPostHogHelper } from "@contentagen/sdk";
+import { createSdk } from "@contentagen/sdk";
+import { createPostHogHelper } from "./src/posthog"; // not exported from the package entry yet
 
 const sdk = createSdk({ apiKey: "YOUR_API_KEY" });
-
 const posthogHelper = createPostHogHelper();
 
 // Example usage in AstroJS or other build-time frameworks
 async function renderBlogPost(slug: string, agentId: string) {
-  // Get post data
-  const post = await sdk.getContentBySlug({ slug, agentId });
+	// Get post data
+	const post = await sdk.getContentBySlug({ slug, agentId });
 
-  // Generate tracking script for blog post view
-  const trackViewScript = posthogHelper.trackBlogPostView({
-    id: post.id,
-    slug: post.meta.slug || slug,
-    title: post.meta.title,
-    agentId: post.agentId,
-  });
+	// Generate tracking script for blog post view
+	const trackViewScript = posthogHelper.trackBlogPostView({
+		id: post.id,
+		slug: post.meta.slug || slug,
+		title: post.meta.title,
+		agentId: post.agentId,
+	});
 
-  // In AstroJS, inject the tracking script into the page
-  return {
-    trackingScript: trackViewScript,
-    post,
-  };
+	// In AstroJS, inject the tracking script into the page
+	return {
+		trackingScript: trackViewScript,
+		post,
+	};
 }
 ```
 
@@ -233,12 +255,10 @@ Apache License 2.0
 
 ## Star History
 
-<a href="https://www.star-history.com/#code-weavers/contentagen-sdk&Date">
+<a href="https://www.star-history.com/#F-O-T/contentagen-sdk&Date">
  <picture>
-   <source media="(prefers-color-scheme: dark)" srcset="https://api.star-history.com/svg?repos=code-weavers/contentagen-sdk&type=Date&theme=dark" />
-   <source media="(prefers-color-scheme: light)" srcset="https://api.star-history.com/svg?repos=code-weavers/contentagen-sdk&type=Date" />
-   <img alt="Star History Chart" src="https://api.star-history.com/svg?repos=code-weavers/contentagen-sdk&type=Date" />
+   <source media="(prefers-color-scheme: dark)" srcset="https://api.star-history.com/svg?repos=F-O-T/contentagen-sdk&type=Date&theme=dark" />
+   <source media="(prefers-color-scheme: light)" srcset="https://api.star-history.com/svg?repos=F-O-T/contentagen-sdk&type=Date" />
+   <img alt="Star History Chart" src="https://api.star-history.com/svg?repos=F-O-T/contentagen-sdk&type=Date" />
  </picture>
 </a>
-
-
