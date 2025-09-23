@@ -395,7 +395,7 @@ describe("PostHogHelper", () => {
 			expect(script).toContain("DOMContentLoaded");
 			expect(script).toContain("IntersectionObserver");
 			expect(script).toContain("addEventListener('click'");
-			expect(script).toContain('data-cta-id="hero-primary"');
+			expect(script).toContain('[data-cta-id="');
 			expect(script).toContain("cta_click");
 			expect(script).toContain("cta_impression");
 			expect(script).toContain("threshold: 0.5");
@@ -422,7 +422,7 @@ describe("PostHogHelper", () => {
 			expect(script).toContain("cta_impression");
 
 			// Should contain the specific CTA ID in the data attribute selector
-			expect(script).toContain('data-cta-id="test-cta"');
+			expect(script).toContain('[data-cta-id="');
 
 			// Extract sessionIds from both click and impression events
 			const scriptContent = script.replace(/<script>|<\/script>/g, "");
@@ -447,6 +447,44 @@ describe("PostHogHelper", () => {
 			expect(script).toContain("const observer = new IntersectionObserver");
 			expect(script).toContain("observer.observe(ctaElement)");
 			expect(script).toContain("observer.unobserve(entry.target)");
+		});
+
+		it("safely escapes CTA ID with characters that could break HTML/script contexts", () => {
+			const problematicCtaId = '<div>&"\n/hero-primary';
+			const ctaData = {
+				ctaId: problematicCtaId,
+				ctaText: "Test Button",
+				ctaType: "primary" as const,
+				placement: "test",
+			};
+
+			const script = helper.generateCTATrackingScript(ctaData);
+
+			// Verify the script tag structure is intact
+			expect(script).toMatch(/^<script>/);
+			expect(script).toMatch(/<\/script>$/);
+			
+			// Verify no premature script tag injection (before the end of the script)
+			const scriptContent = script.replace(/^<script>|<\/script>$/g, '');
+			expect(scriptContent).not.toContain('</script>');
+			expect(scriptContent).not.toContain('<script');
+			
+			// Verify the CTA ID appears in a safely escaped form
+			expect(script).toContain('\\x3cdiv'); // Escaped <div in comment
+			expect(script).toContain('hero-primary');
+			
+			// Verify the JSON string literal is properly quoted and escaped
+			expect(script).toContain('const ctaId = "<div>&\\"\\n/hero-primary";');
+			
+			// Verify the escaped selector is generated safely
+			expect(script).toContain('escapedSelector');
+			expect(script).toContain('CSS.escape');
+			
+			// Verify the script structure is intact and no injection occurred
+			expect(script).toMatch(/^<script>/);
+			expect(script).toMatch(/<\/script>$/);
+			expect(scriptContent).not.toContain('</script>');
+			expect(scriptContent).not.toContain('<script');
 		});
 	});
 

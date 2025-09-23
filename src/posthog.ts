@@ -199,13 +199,37 @@ export class PostHogHelper {
 		const escapedCtaId = ctaData.ctaId
 			.replace(/\\/g, '\\\\')
 			.replace(/"/g, '\\"')
-			.replace(/'/g, "\\'");
+			.replace(/'/g, "\\'")
+			.replace(/</g, '\\x3c')
+			.replace(/>/g, '\\x3e')
+			.replace(/&/g, '\\x26')
+			.replace(/\n/g, '\\n')
+			.replace(/\r/g, '\\r')
+			.replace(/\u2028/g, '\\u2028')
+			.replace(/\u2029/g, '\\u2029');
 
 		return `<script>
 // CTA Tracking for ${escapedCtaId}
 document.addEventListener('DOMContentLoaded', function() {
   // Track impression when CTA is visible
-  const ctaElement = document.querySelector('[data-cta-id="${escapedCtaId}"]');
+  const ctaId = ${JSON.stringify(ctaData.ctaId)};
+  const escapedSelector = typeof CSS !== 'undefined' && typeof CSS.escape === 'function' 
+    ? CSS.escape(ctaId) 
+    : ctaId.replace(/["'<>\\&\\n\\r\\u2028\\u2029]/g, function(c) {
+        return {
+          '"': '\\"',
+          "'": "\\'",
+          '<': '\\x3c',
+          '>': '\\x3e',
+          '\\': '\\\\',
+          '&': '\\x26',
+          '\n': '\\n',
+          '\r': '\\r',
+          '\u2028': '\\u2028',
+          '\u2029': '\\u2029'
+        }[c];
+      });
+  const ctaElement = document.querySelector('[data-cta-id="' + escapedSelector + '"]');
   if (ctaElement) {
     const observer = new IntersectionObserver((entries) => {
       entries.forEach(entry => {
