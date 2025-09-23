@@ -210,52 +210,67 @@ export class PostHogHelper {
 
 		return `<script>
 // CTA Tracking for ${escapedCtaId}
-document.addEventListener('DOMContentLoaded', function() {
-  // Track impression when CTA is visible
-  const ctaId = ${JSON.stringify(ctaData.ctaId)};
-  const escapedSelector = typeof CSS !== 'undefined' && typeof CSS.escape === 'function' 
-    ? CSS.escape(ctaId) 
-    : ctaId.replace(/["'<>\\&\\n\\r\\u2028\\u2029]/g, function(c) {
-        return {
-          '"': '\\"',
-          "'": "\\'",
-          '<': '\\x3c',
-          '>': '\\x3e',
-          '\\': '\\\\',
-          '&': '\\x26',
-          '\n': '\\n',
-          '\r': '\\r',
-          '\u2028': '\\u2028',
-          '\u2029': '\\u2029'
-        }[c];
-      });
-  const ctaElement = document.querySelector('[data-cta-id="' + escapedSelector + '"]');
-  if (ctaElement) {
-    const observer = new IntersectionObserver((entries) => {
-      entries.forEach(entry => {
-        if (entry.isIntersecting) {
-          if (typeof posthog !== 'undefined') {
-            const impressionPayloadWithTimestamp = { ...${impressionPayload} };
-            impressionPayloadWithTimestamp.timestamp = new Date().toISOString();
-            posthog.capture('cta_impression', impressionPayloadWithTimestamp);
+(function() {
+  let setupCalled = false;
+  
+  function setupCtaTracking() {
+    if (setupCalled) return;
+    setupCalled = true;
+    
+    // Track impression when CTA is visible
+    const ctaId = ${JSON.stringify(ctaData.ctaId)};
+    const escapedSelector = typeof CSS !== 'undefined' && typeof CSS.escape === 'function' 
+      ? CSS.escape(ctaId) 
+      : ctaId.replace(/["'<>\\&\\n\\r\\u2028\\u2029]/g, function(c) {
+          return {
+            '"': '\\"',
+            "'": "\\'",
+            '<': '\\x3c',
+            '>': '\\x3e',
+            '\\': '\\\\',
+            '&': '\\x26',
+            '\n': '\\n',
+            '\r': '\\r',
+            '\u2028': '\\u2028',
+            '\u2029': '\\u2029'
+          }[c];
+        });
+    const ctaElement = document.querySelector('[data-cta-id="' + escapedSelector + '"]');
+    if (ctaElement) {
+      const observer = new IntersectionObserver((entries) => {
+        entries.forEach(entry => {
+          if (entry.isIntersecting) {
+            if (typeof posthog !== 'undefined') {
+              const impressionPayloadWithTimestamp = { ...${impressionPayload} };
+              impressionPayloadWithTimestamp.timestamp = new Date().toISOString();
+              posthog.capture('cta_impression', impressionPayloadWithTimestamp);
+            }
+            observer.unobserve(entry.target);
           }
-          observer.unobserve(entry.target);
+        });
+      }, { threshold: 0.5 });
+      
+      observer.observe(ctaElement);
+      
+      // Track click events
+      ctaElement.addEventListener('click', function() {
+        if (typeof posthog !== 'undefined') {
+          const clickPayloadWithTimestamp = { ...${clickPayload} };
+          clickPayloadWithTimestamp.timestamp = new Date().toISOString();
+          posthog.capture('cta_click', clickPayloadWithTimestamp);
         }
       });
-    }, { threshold: 0.5 });
-    
-    observer.observe(ctaElement);
-    
-    // Track click events
-    ctaElement.addEventListener('click', function() {
-      if (typeof posthog !== 'undefined') {
-        const clickPayloadWithTimestamp = { ...${clickPayload} };
-        clickPayloadWithTimestamp.timestamp = new Date().toISOString();
-        posthog.capture('cta_click', clickPayloadWithTimestamp);
-      }
-    });
+    }
   }
-});
+  
+  // Check if DOM is already loaded
+  if (document.readyState === 'interactive' || document.readyState === 'complete') {
+    setupCtaTracking();
+  } else {
+    // Fallback for when script runs before DOM is loaded
+    document.addEventListener('DOMContentLoaded', setupCtaTracking);
+  }
+})();
 </script>`;
 	}
 }
