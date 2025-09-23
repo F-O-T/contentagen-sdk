@@ -1,6 +1,6 @@
 {
 	"name": "@contentagen/sdk",
-	"version": "0.11.0",
+	"version": "0.12.0",
 	"private": false,
 	"type": "module",
 	"description": "Official TypeScript SDK to interact with the ContentaGen API. Provides lightweight client methods for listing and retrieving content, automatic input validation, date parsing, and robust error handling.",
@@ -13,6 +13,11 @@
 			"types": "./dist/index.d.ts",
 			"import": "./dist/index.js",
 			"default": "./dist/index.js"
+		},
+		"./posthog": {
+			"types": "./dist/posthog.d.ts",
+			"import": "./dist/posthog.js",
+			"default": "./dist/posthog.js"
 		}
 	},
 	"files": [
