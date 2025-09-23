@@ -196,7 +196,10 @@ export class PostHogHelper {
 		};
 		const clickPayload = this.escapeJson(JSON.stringify(clickEvent));
 		const impressionPayload = this.escapeJson(JSON.stringify(impressionEvent));
-		const escapedCtaId = ctaData.ctaId.replace(/"/g, '\\"');
+		const escapedCtaId = ctaData.ctaId
+			.replace(/\\/g, '\\\\')
+			.replace(/"/g, '\\"')
+			.replace(/'/g, "\\'");
 
 		return `<script>
 // CTA Tracking for ${escapedCtaId}
@@ -208,7 +211,9 @@ document.addEventListener('DOMContentLoaded', function() {
       entries.forEach(entry => {
         if (entry.isIntersecting) {
           if (typeof posthog !== 'undefined') {
-            posthog.capture('cta_impression', ${impressionPayload});
+            const impressionPayloadWithTimestamp = { ...${impressionPayload} };
+            impressionPayloadWithTimestamp.timestamp = new Date().toISOString();
+            posthog.capture('cta_impression', impressionPayloadWithTimestamp);
           }
           observer.unobserve(entry.target);
         }
@@ -220,7 +225,9 @@ document.addEventListener('DOMContentLoaded', function() {
     // Track click events
     ctaElement.addEventListener('click', function() {
       if (typeof posthog !== 'undefined') {
-        posthog.capture('cta_click', ${clickPayload});
+        const clickPayloadWithTimestamp = { ...${clickPayload} };
+        clickPayloadWithTimestamp.timestamp = new Date().toISOString();
+        posthog.capture('cta_click', clickPayloadWithTimestamp);
       }
     });
   }

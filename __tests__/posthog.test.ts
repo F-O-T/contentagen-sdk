@@ -211,6 +211,7 @@ describe("PostHogHelper", () => {
 			expect(script).toContain('"type":"click"');
 			// Should not contain userId or metadata fields
 			expect(script).not.toContain('"userId"');
+			expect(script).not.toContain('"metadata"');
 		});
 
 		it("handles different CTA types", () => {
@@ -422,6 +423,13 @@ describe("PostHogHelper", () => {
 
 			// Should contain the specific CTA ID in the data attribute selector
 			expect(script).toContain('data-cta-id="test-cta"');
+
+			// Extract sessionIds from both click and impression events
+			const scriptContent = script.replace(/<script>|<\/script>/g, "");
+			const sessionMatches = scriptContent.match(/"sessionId":"(session_[^"]+)"/g);
+			
+			expect(sessionMatches).toHaveLength(2);
+			expect(sessionMatches?.[0]).toBe(sessionMatches?.[1]);
 		});
 
 		it("generates proper DOMContentLoaded and observer setup", () => {
