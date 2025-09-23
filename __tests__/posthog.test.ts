@@ -177,8 +177,12 @@ describe("PostHogHelper", () => {
 
 			const event1Match = script1Content.match(/"id":"(event_[^"]+)"/);
 			const event2Match = script2Content.match(/"id":"(event_[^"]+)"/);
-			const session1Match = script1Content.match(/"sessionId":"(session_[^"]+)"/);
-			const session2Match = script2Content.match(/"sessionId":"(session_[^"]+)"/);
+			const session1Match = script1Content.match(
+				/"sessionId":"(session_[^"]+)"/,
+			);
+			const session2Match = script2Content.match(
+				/"sessionId":"(session_[^"]+)"/,
+			);
 
 			expect(event1Match?.[1]).toBeTruthy();
 			expect(event2Match?.[1]).toBeTruthy();
@@ -330,7 +334,7 @@ describe("PostHogHelper", () => {
 		it("handles different conversion types", () => {
 			const conversionTypes = [
 				"sign_up",
-				"purchase", 
+				"purchase",
 				"demo_request",
 				"trial_start",
 			] as const;
@@ -390,10 +394,16 @@ describe("PostHogHelper", () => {
 			expect(script).toContain("DOMContentLoaded");
 			expect(script).toContain("IntersectionObserver");
 			expect(script).toContain("addEventListener('click'");
-			expect(script).toContain("data-cta-id=\"hero-primary\"");
+			expect(script).toContain('data-cta-id="hero-primary"');
 			expect(script).toContain("cta_click");
 			expect(script).toContain("cta_impression");
 			expect(script).toContain("threshold: 0.5");
+
+			// Safety assertions to prevent nested or multiple script tags
+			expect(script).toMatch(/^<script>/);
+			expect(script).toMatch(/<\/script>$/);
+			expect(script).not.toMatch(/<script[^>]*<script/);
+			expect(script).not.toMatch(/<\/script[^>]*<\/script/);
 		});
 
 		it("includes both click and impression event generation", () => {
@@ -409,7 +419,7 @@ describe("PostHogHelper", () => {
 			// Should contain both click and impression tracking
 			expect(script).toContain("cta_click");
 			expect(script).toContain("cta_impression");
-			
+
 			// Should contain the specific CTA ID in the data attribute selector
 			expect(script).toContain('data-cta-id="test-cta"');
 		});
@@ -434,19 +444,17 @@ describe("PostHogHelper", () => {
 
 	describe("ID Generation", () => {
 		it("generates properly formatted session IDs", () => {
-			// Access private method for testing
-			const sessionId = (helper as any).generateSessionId();
-			
+			const sessionId = helper.generateSessionId();
+
 			expect(sessionId).toMatch(/^session_[a-z0-9]{9}$/);
-			expect(sessionId.length).toBe(16); // "session_" + 9 chars
+			expect(sessionId.length).toBe(17); // "session_" + 9 chars
 		});
 
 		it("generates properly formatted event IDs", () => {
-			// Access private method for testing
-			const eventId = (helper as any).generateEventId();
-			
+			const eventId = helper.generateEventId();
+
 			expect(eventId).toMatch(/^event_[a-z0-9]{9}$/);
-			expect(eventId.length).toBe(14); // "event_" + 9 chars
+			expect(eventId.length).toBe(15); // "event_" + 9 chars
 		});
 
 		it("generates unique IDs across multiple calls", () => {
@@ -454,8 +462,8 @@ describe("PostHogHelper", () => {
 			const eventIds = [];
 
 			for (let i = 0; i < 10; i++) {
-				sessionIds.push((helper as any).generateSessionId());
-				eventIds.push((helper as any).generateEventId());
+				sessionIds.push(helper.generateSessionId());
+				eventIds.push(helper.generateEventId());
 			}
 
 			// All IDs should be unique
@@ -468,7 +476,7 @@ describe("PostHogHelper", () => {
 		it("properly escapes special characters in CTA text", () => {
 			const ctaData = {
 				ctaId: "test-cta",
-				ctaText: "Get \"Started\" & Learn <More>",
+				ctaText: 'Get "Started" & Learn <More>',
 				ctaType: "primary" as const,
 				placement: "test",
 			};
@@ -476,7 +484,7 @@ describe("PostHogHelper", () => {
 			const script = helper.trackCTAClick(ctaData);
 
 			expect(script).toContain(
-				'"ctaText":"Get \\"Started\\" & Learn \\u003CMore\\u003E"',
+				'"ctaText":"Get \\"Started\\" \\u0026 Learn \\u003CMore\\u003E"',
 			);
 		});
 
@@ -487,14 +495,14 @@ describe("PostHogHelper", () => {
 				ctaType: "primary" as const,
 				placement: "test",
 				metadata: {
-					title: "Special \"Characters\" & <Tags>",
+					title: 'Special "Characters" & <Tags>',
 					description: "Test & Learn",
 				},
 			};
 
 			const script = helper.trackCTAClick(ctaData);
 
-			expect(script).toContain('\\u003CTags\\u003E');
+			expect(script).toContain("\\u003CTags\\u003E");
 			expect(script).toContain('\\"Characters\\"');
 		});
 	});

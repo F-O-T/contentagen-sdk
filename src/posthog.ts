@@ -1,9 +1,9 @@
 export interface CTAEvent {
 	id: string;
-	type: 'click' | 'impression' | 'hover' | 'conversion';
+	type: "click" | "impression" | "hover" | "conversion";
 	ctaId: string;
 	ctaText: string;
-	ctaType: 'primary' | 'secondary' | 'tertiary';
+	ctaType: "primary" | "secondary" | "tertiary";
 	placement: string;
 	timestamp: string;
 	userId?: string;
@@ -13,7 +13,7 @@ export interface CTAEvent {
 
 export interface CTAConversionEvent {
 	cta_id: string;
-	conversion_type: 'sign_up' | 'purchase' | 'demo_request' | 'trial_start';
+	conversion_type: "sign_up" | "purchase" | "demo_request" | "trial_start";
 	revenue?: number;
 	currency?: string;
 	timestamp: string;
@@ -27,11 +27,11 @@ export interface CTAConversionEvent {
 }
 
 export class PostHogHelper {
-	private generateSessionId(): string {
+	public generateSessionId(): string {
 		return `session_${Math.random().toString(36).substring(2, 11)}`;
 	}
 
-	private generateEventId(): string {
+	public generateEventId(): string {
 		return `event_${Math.random().toString(36).substring(2, 11)}`;
 	}
 
@@ -71,14 +71,14 @@ export class PostHogHelper {
 	trackCTAClick(ctaData: {
 		ctaId: string;
 		ctaText: string;
-		ctaType: 'primary' | 'secondary' | 'tertiary';
+		ctaType: "primary" | "secondary" | "tertiary";
 		placement: string;
 		userId?: string;
 		metadata?: Record<string, unknown>;
 	}): string {
 		const eventData: CTAEvent = {
 			id: this.generateEventId(),
-			type: 'click',
+			type: "click",
 			ctaId: ctaData.ctaId,
 			ctaText: ctaData.ctaText,
 			ctaType: ctaData.ctaType,
@@ -101,14 +101,14 @@ export class PostHogHelper {
 	trackCTAImpression(ctaData: {
 		ctaId: string;
 		ctaText: string;
-		ctaType: 'primary' | 'secondary' | 'tertiary';
+		ctaType: "primary" | "secondary" | "tertiary";
 		placement: string;
 		userId?: string;
 		metadata?: Record<string, unknown>;
 	}): string {
 		const eventData: CTAEvent = {
 			id: this.generateEventId(),
-			type: 'impression',
+			type: "impression",
 			ctaId: ctaData.ctaId,
 			ctaText: ctaData.ctaText,
 			ctaType: ctaData.ctaType,
@@ -130,7 +130,7 @@ export class PostHogHelper {
 
 	trackCTAConversion(conversionData: {
 		ctaId: string;
-		conversionType: 'sign_up' | 'purchase' | 'demo_request' | 'trial_start';
+		conversionType: "sign_up" | "purchase" | "demo_request" | "trial_start";
 		revenue?: number;
 		currency?: string;
 		userId?: string;
@@ -163,25 +163,53 @@ export class PostHogHelper {
 	generateCTATrackingScript(ctaData: {
 		ctaId: string;
 		ctaText: string;
-		ctaType: 'primary' | 'secondary' | 'tertiary';
+		ctaType: "primary" | "secondary" | "tertiary";
 		placement: string;
 		userId?: string;
 		metadata?: Record<string, unknown>;
 	}): string {
-		const clickScript = this.trackCTAClick(ctaData);
-		const impressionScript = this.trackCTAImpression(ctaData);
+		// Use a single session across both events
+		const sessionId = this.generateSessionId();
+		const clickEvent: CTAEvent = {
+			id: this.generateEventId(),
+			type: "click",
+			ctaId: ctaData.ctaId,
+			ctaText: ctaData.ctaText,
+			ctaType: ctaData.ctaType,
+			placement: ctaData.placement,
+			timestamp: new Date().toISOString(),
+			userId: ctaData.userId,
+			sessionId,
+			metadata: ctaData.metadata,
+		};
+		const impressionEvent: CTAEvent = {
+			id: this.generateEventId(),
+			type: "impression",
+			ctaId: ctaData.ctaId,
+			ctaText: ctaData.ctaText,
+			ctaType: ctaData.ctaType,
+			placement: ctaData.placement,
+			timestamp: new Date().toISOString(),
+			userId: ctaData.userId,
+			sessionId,
+			metadata: ctaData.metadata,
+		};
+		const clickPayload = this.escapeJson(JSON.stringify(clickEvent));
+		const impressionPayload = this.escapeJson(JSON.stringify(impressionEvent));
+		const escapedCtaId = ctaData.ctaId.replace(/"/g, '\\"');
 
-		return `
-<script>
-// CTA Tracking for ${ctaData.ctaId}
+		return `<script>
+// CTA Tracking for ${escapedCtaId}
 document.addEventListener('DOMContentLoaded', function() {
   // Track impression when CTA is visible
-  const ctaElement = document.querySelector('[data-cta-id="${ctaData.ctaId}"]');
+  const ctaElement = document.querySelector('[data-cta-id="${escapedCtaId}"]');
   if (ctaElement) {
     const observer = new IntersectionObserver((entries) => {
       entries.forEach(entry => {
         if (entry.isIntersecting) {
-          ${impressionScript}
+          if (typeof posthog !== 'undefined') {
+            posthog.capture('cta_impression', ${impressionPayload});
+          }
           observer.unobserve(entry.target);
         }
       });
@@ -191,7 +219,9 @@ document.addEventListener('DOMContentLoaded', function() {
     
     // Track click events
     ctaElement.addEventListener('click', function() {
-      ${clickScript}
+      if (typeof posthog !== 'undefined') {
+        posthog.capture('cta_click', ${clickPayload});
+      }
     });
   }
 });
