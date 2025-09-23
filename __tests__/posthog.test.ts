@@ -512,6 +512,7 @@ describe("PostHogHelper", () => {
 
 			expect(script).toContain("\\u003CTags\\u003E");
 			expect(script).toContain('\\"Characters\\"');
+			expect(script).toContain("\\u0026");
 		});
 	});
 });
