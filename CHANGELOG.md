@@ -2,6 +2,26 @@
 
 All notable changes to this package will be documented in this file.
 
+## [0.12.0] - 2025-09-23
+
+### Added
+- **Enhanced PostHog Analytics Helper**: Comprehensive CTA (Call-to-Action) tracking capabilities
+  - `trackCTAClick()`: Track CTA click events with user context and metadata
+  - `trackCTAImpression()`: Track when CTAs become visible using IntersectionObserver
+  - `trackCTAConversion()`: Track conversion events with revenue attribution and funnel analysis
+  - `generateCTATrackingScript()`: Auto-generate complete tracking scripts for CTAs
+  - Support for primary, secondary, and tertiary CTA types
+  - Automatic session and event ID generation
+  - Comprehensive metadata support for advanced analytics
+- **Package Export Configuration**: Added dedicated PostHog export via `@contentagen/sdk/posthog`
+- **Type Safety Improvements**: Replaced `any` types with `unknown` for better type safety
+- **Code Quality**: Fixed deprecated `substr()` methods with modern `substring()` alternatives
+- **Comprehensive Test Suite**: Added 50+ test cases covering all new CTA tracking functionality
+
+### Changed
+- **PostHog Helper Architecture**: Enhanced to support both blog post and CTA analytics tracking
+- **Package Structure**: Added separate export entry for PostHog helper to avoid barrel files
+
 ## [0.11.0] - 2025-09-03
 
 ### Added
