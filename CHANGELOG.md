@@ -2,6 +2,18 @@
 
 All notable changes to this package will be documented in this file.
 
+## [0.13.0] - 2025-09-25
+
+### Added
+- **Layout Field Support**: Added `layout` field to `ContentRequest` schema and type
+- **Enhanced Content Types**: Content requests now support layout specification with options: "tutorial", "interview", "article", "changelog"
+- **Updated Documentation**: README and types updated to reflect new layout field functionality
+- **Test Coverage**: Updated test suite to validate new layout field requirements
+
+### Changed
+- **ContentRequest Schema**: Extended to include mandatory `layout` field alongside existing `description` field
+- **Type Definitions**: Updated `ContentRequest` type to enforce layout specification for content creation
+
 ## [0.12.0] - 2025-09-23
 
 ### Added

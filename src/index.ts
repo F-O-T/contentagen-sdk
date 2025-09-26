@@ -1,6 +1,6 @@
 import SuperJSON from "superjson";
 import { z } from "zod";
-import type { ContentList, ContentSelect, ShareStatus } from "./types";
+import type { ContentList, ContentSelect } from "./types";
 import {
 	AuthorByAgentIdSchema,
 	ContentListResponseSchema,
@@ -9,7 +9,6 @@ import {
 	ImageSchema,
 	ListContentByAgentInputSchema,
 	RelatedSlugsResponseSchema,
-	ShareStatusValues,
 } from "./types";
 
 export const ERROR_CODES = {

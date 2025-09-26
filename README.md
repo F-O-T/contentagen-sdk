@@ -159,7 +159,7 @@ Shapes shown here reflect the runtime Zod schemas returned by the SDK. Only `Sha
   - `status`: "draft" | "approved"
   - `shareStatus`: "private" | "public"
   - `meta`: { title?: string; description?: string; keywords?: string[]; slug?: string; sources?: string[] }
-  - `request`: { description: string }
+  - `request`: { description: string; layout: "tutorial" | "interview" | "article" | "changelog" }
   - `stats`: { wordsCount?: string; readTimeMinutes?: string; qualityScore?: string }
   - `createdAt`: Date
   - `updatedAt`: Date
