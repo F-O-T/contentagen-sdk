@@ -111,7 +111,7 @@ const mockSlugResponse = {
 					keywords: ["tag1"],
 					sources: ["source1"],
 				},
-				request: { description: "desc" },
+				request: { description: "desc", layout: "tutorial" },
 				stats: {
 					wordsCount: "100",
 					readTimeMinutes: "2",
