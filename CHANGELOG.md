@@ -2,6 +2,20 @@
 
 All notable changes to this package will be documented in this file.
 
+## [0.14.0] - 2025-10-14
+
+### Added
+- **Streaming Assistant Response**: New `streamAssistantResponse` procedure for real-time AI assistant responses
+  - `sdk.streamAssistantResponse({ message: string })` method that returns an `AsyncGenerator<string>`
+  - Support for streaming text responses from the AI assistant
+  - `StreamAssistantResponseInputSchema` for input validation
+  - Real-time response processing using async generators
+  - Enhanced error handling for streaming connections
+- **Updated Documentation**: README updated with streaming method examples and API documentation
+
+### Changed
+- **Enhanced API Coverage**: SDK now provides comprehensive access to all ContentaGen API procedures including streaming capabilities
+
 ## [0.13.0] - 2025-09-25
 
 ### Added
