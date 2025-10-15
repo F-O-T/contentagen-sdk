@@ -268,14 +268,11 @@ export class ContentaGenSDK {
 
 			const fullUrl = url.toString();
 
-			// Create the fetch call
-			const fetchCall = () =>
-				fetch(fullUrl, {
-					method: "GET",
-					headers: this.getHeaders(),
-				});
-
-			const response = await fetchCall();
+			// Simple fetch call
+			const response = await fetch(fullUrl, {
+				method: "GET",
+				headers: this.getHeaders(),
+			});
 
 			if (!response.ok) {
 				const errorText = await response.text();
@@ -289,20 +286,17 @@ export class ContentaGenSDK {
 				throw new Error("Response body is null, cannot create a stream.");
 			}
 
-			// Attach Reader
+			// Simple streaming - just like your server
 			const reader = response.body.getReader();
 			const decoder = new TextDecoder();
 
 			while (true) {
-				// Wait for next encoded chunk
 				const { done, value } = await reader.read();
 
-				// Check if stream is done
 				if (done) {
 					break;
 				}
 
-				// Decodes data chunk and yields it
 				const chunk = decoder.decode(value);
 				yield chunk;
 			}
