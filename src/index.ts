@@ -1,4 +1,3 @@
-import SuperJSON from "superjson";
 import { z } from "zod";
 import type { ContentList, ContentSelect } from "./types";
 import {
@@ -10,7 +9,6 @@ import {
 	ListContentByAgentInputSchema,
 	RelatedSlugsResponseSchema,
 	StreamAssistantResponseInputSchema,
-	StreamAssistantResponseOutputSchema,
 } from "./types";
 
 export const ERROR_CODES = {
@@ -32,13 +30,13 @@ export const ERROR_CODES = {
 	},
 };
 
-export const TRPC_ENDPOINTS = {
-	listContentByAgent: "listContentByAgent",
-	getContentBySlug: "getContentBySlug",
-	getRelatedSlugs: "getRelatedSlugs",
-	getAuthorByAgentId: "getAuthorByAgentId",
-	getContentImage: "getContentImage",
-	streamAssistantResponse: "streamAssistantResponse",
+export const API_ENDPOINTS = {
+	listContentByAgent: "/content",
+	getContentBySlug: "/content",
+	getRelatedSlugs: "/related-slugs",
+	getAuthorByAgentId: "/author",
+	getContentImage: "/content/image",
+	streamAssistantResponse: "/assistant",
 };
 
 const PRODUCTION_API_URL = "https://api.contentagen.com";
@@ -50,7 +48,7 @@ export interface SdkConfig {
 }
 
 export class ContentaGenSDK {
-	private trpcUrl: string;
+	private baseUrl: string;
 	private apiKey: string;
 	private locale?: string;
 
@@ -59,9 +57,7 @@ export class ContentaGenSDK {
 			throw new Error("apiKey is required to initialize the ContentaGenSDK");
 		}
 
-		const baseUrl = config.host || PRODUCTION_API_URL;
-
-		this.trpcUrl = `${baseUrl}/trpc`;
+		this.baseUrl = config.host || PRODUCTION_API_URL;
 		this.apiKey = config.apiKey;
 		this.locale = config.locale;
 	}
@@ -102,61 +98,54 @@ export class ContentaGenSDK {
 		return data;
 	}
 
-	private _parseTrpcResponse<T>(json: unknown, schema: z.ZodType<T>): T {
-		if (
-			json &&
-			typeof json === "object" &&
-			"result" in json &&
-			(json as { result: unknown }).result &&
-			typeof (json as { result: unknown }).result === "object" &&
-			"data" in (json as { result: { data: unknown } }).result
-		) {
-			const resultObj = (json as { result: { data: unknown } }).result;
-			const responseData = resultObj.data;
-			// Safely extract json property if exists, or use responseData
-			const actualData =
-				typeof responseData === "object" &&
-					responseData !== null &&
-					"json" in responseData
-					? (responseData as { json: unknown }).json
-					: responseData;
-			const transformedData = this.transformDates(actualData);
-			return schema.parse(transformedData);
-		}
-		const { code, message } = ERROR_CODES.INVALID_API_RESPONSE;
-		throw new Error(`${code}: ${message}`);
+	private _parseApiResponse<T>(json: unknown, schema: z.ZodType<T>): T {
+		const transformedData = this.transformDates(json);
+		return schema.parse(transformedData);
 	}
 
-	private async _query<T>(
+	private async _get<T>(
 		path: string,
-		input: unknown,
+		params: Record<string, unknown>,
 		schema: z.ZodType<T>,
 	): Promise<T> {
-		const url = new URL(`${this.trpcUrl}/sdk.${path}`);
-		if (input) {
-			url.searchParams.set("input", SuperJSON.stringify(input));
-		}
+		const url = new URL(`${this.baseUrl}/sdk${path}`);
+		Object.entries(params).forEach(([key, value]) => {
+			if (value !== undefined && value !== null) {
+				if (Array.isArray(value)) {
+					url.searchParams.set(key, value.join(","));
+				} else {
+					url.searchParams.set(key, String(value));
+				}
+			}
+		});
 
-		const response = await fetch(url.toString(), {
+		const fullUrl = url.toString();
+
+		const response = await fetch(fullUrl, {
 			headers: this.getHeaders(),
 		});
 
 		if (!response.ok) {
+			const errorText = await response.text();
 			const { code, message } = ERROR_CODES.API_REQUEST_FAILED;
-			throw new Error(`${code}: ${message} (${response.statusText})`);
+			throw new Error(
+				`${code}: ${message} (${response.statusText}) - ${errorText}`,
+			);
 		}
 
 		const json = await response.json();
-		return this._parseTrpcResponse(json, schema);
+		return this._parseApiResponse(json, schema);
 	}
+
 	async listContentByAgent(
 		params: z.input<typeof ListContentByAgentInputSchema>,
 	): Promise<ContentList> {
 		try {
 			const validatedParams = ListContentByAgentInputSchema.parse(params);
-			return this._query(
-				TRPC_ENDPOINTS.listContentByAgent,
-				validatedParams,
+			const { agentIds, limit, page, status } = validatedParams;
+			return this._get(
+				`${API_ENDPOINTS.listContentByAgent}/${agentIds.join(",")}`,
+				{ limit, page, status },
 				ContentListResponseSchema,
 			);
 		} catch (error) {
@@ -175,9 +164,10 @@ export class ContentaGenSDK {
 	): Promise<ContentSelect> {
 		try {
 			const validatedParams = GetContentBySlugInputSchema.parse(params);
-			return this._query(
-				TRPC_ENDPOINTS.getContentBySlug,
-				validatedParams,
+			const { agentId, slug } = validatedParams;
+			return this._get(
+				`${API_ENDPOINTS.getContentBySlug}/${agentId}/${slug}`,
+				{},
 				ContentSelectSchema,
 			);
 		} catch (error) {
@@ -196,9 +186,10 @@ export class ContentaGenSDK {
 	): Promise<string[]> {
 		try {
 			const validatedParams = GetContentBySlugInputSchema.parse(params);
-			return this._query(
-				TRPC_ENDPOINTS.getRelatedSlugs,
-				validatedParams,
+			const { agentId, slug } = validatedParams;
+			return this._get(
+				API_ENDPOINTS.getRelatedSlugs,
+				{ agentId, slug },
 				RelatedSlugsResponseSchema,
 			);
 		} catch (error) {
@@ -219,9 +210,10 @@ export class ContentaGenSDK {
 			const validatedParams = GetContentBySlugInputSchema.pick({
 				agentId: true,
 			}).parse(params);
-			return this._query(
-				TRPC_ENDPOINTS.getAuthorByAgentId,
-				validatedParams,
+			const { agentId } = validatedParams;
+			return this._get(
+				`${API_ENDPOINTS.getAuthorByAgentId}/${agentId}`,
+				{},
 				AuthorByAgentIdSchema,
 			);
 		} catch (error) {
@@ -242,9 +234,10 @@ export class ContentaGenSDK {
 			const validatedParams = z
 				.object({ contentId: z.string().min(1, "Content ID is required") })
 				.parse(params);
-			return this._query(
-				TRPC_ENDPOINTS.getContentImage,
-				validatedParams,
+			const { contentId } = validatedParams;
+			return this._get(
+				`${API_ENDPOINTS.getContentImage}/${contentId}`,
+				{},
 				ImageSchema,
 			);
 		} catch (error) {
@@ -258,21 +251,67 @@ export class ContentaGenSDK {
 		}
 	}
 
-	async streamAssistantResponse(
+	async *streamAssistantResponse(
 		params: z.input<typeof StreamAssistantResponseInputSchema>,
-	): Promise<z.infer<typeof StreamAssistantResponseOutputSchema>> {
+	): AsyncGenerator<string, void, unknown> {
 		try {
 			const validatedParams = StreamAssistantResponseInputSchema.parse(params);
-			return this._query(
-				TRPC_ENDPOINTS.streamAssistantResponse,
-				validatedParams,
-				StreamAssistantResponseOutputSchema,
+
+			const { agentId, message } = validatedParams;
+
+			// Use the URL constructor to safely build the URL with query parameters
+			const url = new URL(
+				`${this.baseUrl}/sdk${API_ENDPOINTS.streamAssistantResponse}`,
 			);
+			url.searchParams.set("agentId", agentId);
+			url.searchParams.set("message", message);
+
+			const fullUrl = url.toString();
+
+			// Create the fetch call
+			const fetchCall = () =>
+				fetch(fullUrl, {
+					method: "GET",
+					headers: this.getHeaders(),
+				});
+
+			const response = await fetchCall();
+
+			if (!response.ok) {
+				const errorText = await response.text();
+				const { code, message } = ERROR_CODES.API_REQUEST_FAILED;
+				throw new Error(
+					`${code}: ${message} (${response.statusText}) - ${errorText}`,
+				);
+			}
+
+			if (!response.body) {
+				throw new Error("Response body is null, cannot create a stream.");
+			}
+
+			// Attach Reader
+			const reader = response.body.getReader();
+			const decoder = new TextDecoder();
+
+			while (true) {
+				// Wait for next encoded chunk
+				const { done, value } = await reader.read();
+
+				// Check if stream is done
+				if (done) {
+					break;
+				}
+
+				// Decodes data chunk and yields it
+				const chunk = decoder.decode(value);
+				yield chunk;
+			}
 		} catch (error) {
 			if (error instanceof z.ZodError) {
 				const { code, message } = ERROR_CODES.INVALID_INPUT;
+				const validationErrors = error.issues.map((e) => e.message).join(", ");
 				throw new Error(
-					`${code}: ${message} for streamAssistantResponse: ${error.issues.map((e) => e.message).join(", ")}`,
+					`${code}: ${message} for streamAssistantResponse: ${validationErrors}`,
 				);
 			}
 			throw error;

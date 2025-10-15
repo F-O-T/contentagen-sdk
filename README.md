@@ -47,33 +47,31 @@ async function example() {
 		page: 1, // optional, default 1
 	};
 	const list = await sdk.listContentByAgent(listParams);
-	console.log("total:", list.total);
-	console.log("first post summary:", list.posts[0]);
+	// Use list.total and list.posts[0] as needed
 
 	// Get content by slug (use the same agentId you queried with)
 	const selectParams = { slug: "my-post-slug", agentId };
 	const post = await sdk.getContentBySlug(selectParams);
-	console.log(post.id, post.meta.title, post.createdAt, post.shareStatus);
+	// Use post.id, post.meta.title, post.createdAt, post.shareStatus as needed
 
 	// Get related slugs for a post
 	const relatedSlugs = await sdk.getRelatedSlugs({ slug: "my-post-slug", agentId });
-	console.log("Related slugs:", relatedSlugs);
+	// Use relatedSlugs array as needed
 
 	// Get author info by agent ID
 	const author = await sdk.getAuthorByAgentId({ agentId });
-	console.log("Author name:", author.name);
-	console.log("Profile photo:", author.profilePhoto?.contentType);
+	// Use author.name and author.profilePhoto as needed
 
 	// Get the image data for a specific content ID
 	const image = await sdk.getContentImage({ contentId: post.id });
-	console.log("Post image:", image?.contentType, image?.data.length);
+	// Use image?.contentType and image?.data as needed
 
 	// Get assistant response
 	const response = await sdk.streamAssistantResponse({
 		message: "Hello, assistant!",
 		language: "en" // Optional: "en" or "pt", defaults to "en"
 	});
-	console.log(response);
+	// Use response data as needed
 }
 ```
 
@@ -220,19 +218,19 @@ async function run() {
 		});
 
 		if (list.total === 0) {
-			console.log("No posts found");
+			// Handle no posts found
 			return;
 		}
 
 		const first = list.posts[0];
-		console.log("First post id:", first.id);
+		// Use first.id as needed
 
 		const post = await sdk.getContentBySlug({
 			slug: first.meta.slug ?? "unknown-slug",
 			agentId,
 		});
 
-		console.log("Post body:", post.body);
+		// Use post.body as needed
 	} catch (err) {
 		console.error("SDK error:", err);
 	}
