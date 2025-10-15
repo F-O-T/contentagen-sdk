@@ -389,7 +389,11 @@ describe("ContentaGenSDK.streamAssistantResponse", () => {
 		expect(fetchMock).toHaveBeenCalledWith(
 			expect.stringContaining("/trpc/sdk.streamAssistantResponse"),
 			{
-				headers: { "sdk-api-key": apiKey },
+				headers: {
+					"sdk-api-key": apiKey,
+					"Accept": "text/event-stream",
+					"Content-Type": "application/json"
+				},
 			},
 		);
 	});
@@ -628,6 +632,8 @@ describe("ContentaGenSDK locale functionality", () => {
 				headers: {
 					"sdk-api-key": apiKey,
 					"x-locale": "pt-BR",
+					"Accept": "text/event-stream",
+					"Content-Type": "application/json"
 				},
 			},
 		);

@@ -130,6 +130,7 @@ Note: The PostHog helper is currently internal and not exported from the package
     - `message`: string — required
     - `language`: `"en" | "pt"` — optional, defaults to `"en"`
   - Returns: `AsyncGenerator<string, void, unknown>` — async generator that yields streaming response chunks
+  - Note: Automatically includes proper streaming headers (`Accept: text/event-stream`) for API compatibility
 
 ### PostHog Analytics Helper
 

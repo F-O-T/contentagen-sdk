@@ -262,11 +262,17 @@ export class ContentaGenSDK {
 	): AsyncGenerator<string, void, unknown> {
 		try {
 			const validatedParams = StreamAssistantResponseInputSchema.parse(params);
-			const url = new URL(`${this.trpcUrl}/sdk.${TRPC_ENDPOINTS.streamAssistantResponse}`);
+			const url = new URL(
+				`${this.trpcUrl}/sdk.${TRPC_ENDPOINTS.streamAssistantResponse}`,
+			);
 			url.searchParams.set("input", SuperJSON.stringify(validatedParams));
 
 			const response = await fetch(url.toString(), {
-				headers: this.getHeaders(),
+				headers: {
+					...this.getHeaders(),
+					Accept: "text/event-stream",
+					"Content-Type": "application/json",
+				},
 			});
 
 			if (!response.ok) {

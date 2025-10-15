@@ -2,6 +2,14 @@
 
 All notable changes to this package will be documented in this file.
 
+## [0.15.1] - 2025-10-14
+
+### Fixed
+- **Streaming Headers**: Fixed `streamAssistantResponse` requests to include proper HTTP headers
+  - Added `Accept: text/event-stream` header to properly request streaming responses
+  - Added `Content-Type: application/json` header for correct request formatting
+  - Resolves "Unsupported Media Type" errors in streaming API calls
+
 ## [0.15.0] - 2025-10-14
 
 ### Added
