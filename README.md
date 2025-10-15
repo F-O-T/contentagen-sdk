@@ -7,9 +7,10 @@ Official TypeScript SDK for interacting with the ContentaGen API.
 - Input validation with Zod schemas
 - Automatic date parsing for `createdAt` / `updatedAt`
 - Consistent error codes and robust error handling
+- Locale support via `x-locale` header for internationalization
 - Agents can be used as authors (author info is derived from the agent config)
 - New procedures: `getAuthorByAgentId`, `getRelatedSlugs`, `getContentImage`, `streamAssistantResponse`
-- Streaming support for real-time AI assistant responses
+- Streaming support for real-time AI assistant responses with language selection
 - Selected schemas and types exported for advanced usage
 
 ## Installation
@@ -29,7 +30,11 @@ yarn add @contentagen/sdk
 ```ts
 import { createSdk } from "@contentagen/sdk";
 
-const sdk = createSdk({ apiKey: "YOUR_API_KEY" });
+const sdk = createSdk({
+	apiKey: "YOUR_API_KEY",
+	locale: "en-US", // Optional: sets the x-locale header for all requests
+	host: "https://custom.api.example.com" // Optional: custom API host
+});
 
 async function example() {
 	const agentId = "00000000-0000-0000-0000-000000000000";
@@ -64,7 +69,10 @@ async function example() {
 	console.log("Post image:", image?.contentType, image?.data.length);
 
 	// Stream assistant response
-	for await (const chunk of sdk.streamAssistantResponse({ message: "Hello, assistant!" })) {
+	for await (const chunk of sdk.streamAssistantResponse({
+		message: "Hello, assistant!",
+		language: "en" // Optional: "en" or "pt", defaults to "en"
+	})) {
 		process.stdout.write(chunk);
 	}
 }
@@ -73,7 +81,7 @@ async function example() {
 ## API
 
 ### Exports
-- `createSdk(config: { apiKey: string }): ContentaGenSDK` — factory for SDK instance
+- `createSdk(config: { apiKey: string; locale?: string; host?: string }): ContentaGenSDK` — factory for SDK instance
 - `ContentaGenSDK` class — all methods available on instances
 - `type ShareStatus` — union type: `"private" | "public"`
 - Zod schemas for advanced validation:
@@ -120,6 +128,7 @@ Note: The PostHog helper is currently internal and not exported from the package
 - `sdk.streamAssistantResponse(params)`
   - params (validated by `StreamAssistantResponseInputSchema`):
     - `message`: string — required
+    - `language`: `"en" | "pt"` — optional, defaults to `"en"`
   - Returns: `AsyncGenerator<string, void, unknown>` — async generator that yields streaming response chunks
 
 ### PostHog Analytics Helper
