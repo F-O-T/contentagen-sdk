@@ -9,7 +9,7 @@ let fetchMock: ReturnType<typeof vi.fn>;
 // listContentByAgent tests
 const validListInput = {
 	status: ["draft", "approved"] as Array<"draft" | "approved">,
-	agentId: [agentId],
+	agentIds: [agentId],
 	limit: 2,
 	page: 1,
 };
@@ -75,7 +75,7 @@ describe("ContentaGenSDK.listContentByAgent", () => {
 
 	it("throws on invalid input", async () => {
 		await expect(
-			sdk.listContentByAgent({ ...validListInput, agentId: ["not-a-uuid"] }),
+			sdk.listContentByAgent({ ...validListInput, agentIds: ["not-a-uuid"] }),
 		).rejects.toThrow(/SDK_E004/);
 	});
 
@@ -349,7 +349,7 @@ describe("ContentaGenSDK.getContentImage", () => {
 });
 
 // streamAssistantResponse tests
-const validStreamInput = { message: "Hello, assistant!" };
+const validStreamInput = { message: "Hello, assistant!", agentId };
 const mockStreamChunks = ["Hello", " there", "!", " How", " can", " I", " help", " you", "?"];
 
 describe("ContentaGenSDK.streamAssistantResponse", () => {
@@ -400,11 +400,11 @@ describe("ContentaGenSDK.streamAssistantResponse", () => {
 
 	it("throws on invalid input", async () => {
 		// Test empty string
-		const stream1 = sdk.streamAssistantResponse({ message: "" });
+		const stream1 = sdk.streamAssistantResponse({ message: "", agentId });
 		await expect(stream1.next()).rejects.toThrow(/SDK_E004.*Message is required/);
 
 		// Test non-string type
-		const stream2 = sdk.streamAssistantResponse({ message: 123 as any });
+		const stream2 = sdk.streamAssistantResponse({ message: 123 as unknown as string, agentId });
 		await expect(stream2.next()).rejects.toThrow(/SDK_E004/);
 	});
 
@@ -504,12 +504,12 @@ describe("ContentaGenSDK.streamAssistantResponse", () => {
 
 	it("validates input parameters correctly", async () => {
 		const testCases = [
-			{ input: { message: "Valid message" }, shouldPass: true },
-			{ input: { message: "" }, shouldPass: false, expectedError: "Message is required" },
-			{ input: { message: "a".repeat(1000) }, shouldPass: true },
-			{ input: {}, shouldPass: false },
-			{ input: { message: null }, shouldPass: false },
-			{ input: { message: undefined }, shouldPass: false },
+			{ input: { message: "Valid message", agentId }, shouldPass: true },
+			{ input: { message: "", agentId }, shouldPass: false, expectedError: "Message is required" },
+			{ input: { message: "a".repeat(1000), agentId }, shouldPass: true },
+			{ input: { agentId }, shouldPass: false },
+			{ input: { message: null, agentId }, shouldPass: false },
+			{ input: { message: undefined, agentId }, shouldPass: false },
 		];
 
 		for (const testCase of testCases) {
@@ -530,7 +530,7 @@ describe("ContentaGenSDK.streamAssistantResponse", () => {
 
 				const chunks: string[] = [];
 				try {
-					for await (const chunk of sdk.streamAssistantResponse(testCase.input as any)) {
+					for await (const chunk of sdk.streamAssistantResponse(testCase.input as { message: string; agentId: string; language?: "en" | "pt" })) {
 						chunks.push(chunk);
 					}
 					// If we get here, validation passed
@@ -540,8 +540,8 @@ describe("ContentaGenSDK.streamAssistantResponse", () => {
 					expect((error as Error).message).not.toContain("SDK_E004");
 				}
 			} else {
-				const stream = sdk.streamAssistantResponse(testCase.input as any);
-				const expectedError = (testCase as any).expectedError || "SDK_E004";
+				const stream = sdk.streamAssistantResponse(testCase.input as { message: string; agentId: string; language?: "en" | "pt" });
+				const expectedError = (testCase as { expectedError?: string }).expectedError || "SDK_E004";
 				await expect(stream.next()).rejects.toThrow(expectedError);
 			}
 		}
@@ -561,8 +561,8 @@ describe("ContentaGenSDK.streamAssistantResponse", () => {
 		});
 		globalThis.fetch = fetchMock as unknown as typeof fetch;
 
-		const input = { message: "Test message with special chars: !@#$%" };
-		for await (const chunk of sdk.streamAssistantResponse(input)) {
+		const input = { message: "Test message with special chars: !@#$%", agentId };
+		for await (const _chunk of sdk.streamAssistantResponse(input)) {
 			// Consume the stream
 		}
 
@@ -621,7 +621,7 @@ describe("ContentaGenSDK locale functionality", () => {
 			statusText: "OK",
 		});
 
-		for await (const chunk of sdk.streamAssistantResponse({ message: "Test" })) {
+		for await (const _chunk of sdk.streamAssistantResponse({ message: "Test", agentId })) {
 			// Consume the stream
 		}
 
@@ -675,7 +675,7 @@ describe("ContentaGenSDK locale functionality", () => {
 		});
 
 		// Test without language field (should default to "en")
-		for await (const chunk of sdk.streamAssistantResponse({ message: "Test" })) {
+		for await (const _chunk of sdk.streamAssistantResponse({ message: "Test", agentId })) {
 			// Consume the stream
 		}
 
@@ -691,7 +691,7 @@ describe("ContentaGenSDK locale functionality", () => {
 			statusText: "OK",
 		});
 
-		for await (const chunk of sdk.streamAssistantResponse({ message: "Test", language: "pt" })) {
+		for await (const _chunk of sdk.streamAssistantResponse({ message: "Test", language: "pt", agentId })) {
 			// Consume the stream
 		}
 
@@ -704,7 +704,8 @@ describe("ContentaGenSDK locale functionality", () => {
 	it("validates language field in streamAssistantResponse", async () => {
 		const stream = sdk.streamAssistantResponse({
 			message: "Test",
-			language: "invalid" as any
+			language: "invalid" as "en" | "pt",
+			agentId
 		});
 		await expect(stream.next()).rejects.toThrow(/SDK_E004.*Invalid input/);
 	});
@@ -723,12 +724,12 @@ describe("ContentaGenSDK locale functionality", () => {
 		});
 
 		// Test English
-		for await (const chunk of sdk.streamAssistantResponse({ message: "Test", language: "en" })) {
+		for await (const _chunk of sdk.streamAssistantResponse({ message: "Test", language: "en", agentId })) {
 			// Should not throw
 		}
 
 		// Test Portuguese
-		for await (const chunk of sdk.streamAssistantResponse({ message: "Test", language: "pt" })) {
+		for await (const _chunk of sdk.streamAssistantResponse({ message: "Test", language: "pt", agentId })) {
 			// Should not throw
 		}
 
