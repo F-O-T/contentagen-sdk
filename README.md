@@ -10,7 +10,7 @@ Official TypeScript SDK for interacting with the ContentaGen API.
 - Locale support via `x-locale` header for internationalization
 - Agents can be used as authors (author info is derived from the agent config)
 - New procedures: `getAuthorByAgentId`, `getRelatedSlugs`, `getContentImage`, `streamAssistantResponse`
-- Streaming support for real-time AI assistant responses with language selection
+- AI assistant response support with language selection
 - Selected schemas and types exported for advanced usage
 
 ## Installation
@@ -68,13 +68,12 @@ async function example() {
 	const image = await sdk.getContentImage({ contentId: post.id });
 	console.log("Post image:", image?.contentType, image?.data.length);
 
-	// Stream assistant response
-	for await (const chunk of sdk.streamAssistantResponse({
+	// Get assistant response
+	const response = await sdk.streamAssistantResponse({
 		message: "Hello, assistant!",
 		language: "en" // Optional: "en" or "pt", defaults to "en"
-	})) {
-		process.stdout.write(chunk);
-	}
+	});
+	console.log(response);
 }
 ```
 
@@ -129,9 +128,8 @@ Note: The PostHog helper is currently internal and not exported from the package
   - params (validated by `StreamAssistantResponseInputSchema`):
     - `message`: string — required
     - `language`: `"en" | "pt"` — optional, defaults to `"en"`
-  - Returns: `AsyncGenerator<string, void, unknown>` — async generator that yields streaming response chunks
-  - Note: Uses simplified chunk decoding for improved reliability and compatibility across different environments
-  - Note: Automatically includes proper streaming headers (`Accept: application/json`) for API compatibility
+  - Returns: `Promise<StreamAssistantResponseInputSchema>` — standard promise returning validated response data
+  - Note: Uses the `_query` method for consistency with other SDK methods
 
 ### PostHog Analytics Helper
 

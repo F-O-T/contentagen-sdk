@@ -257,45 +257,16 @@ export class ContentaGenSDK {
 		}
 	}
 
-	async *streamAssistantResponse(
+	async streamAssistantResponse(
 		params: z.input<typeof StreamAssistantResponseInputSchema>,
-	): AsyncGenerator<string, void, unknown> {
+	): Promise<z.infer<typeof StreamAssistantResponseInputSchema>> {
 		try {
 			const validatedParams = StreamAssistantResponseInputSchema.parse(params);
-			const url = new URL(
-				`${this.trpcUrl}/sdk.${TRPC_ENDPOINTS.streamAssistantResponse}`,
+			return this._query(
+				TRPC_ENDPOINTS.streamAssistantResponse,
+				validatedParams,
+				StreamAssistantResponseInputSchema,
 			);
-			url.searchParams.set("input", SuperJSON.stringify(validatedParams));
-
-			const response = await fetch(url.toString(), {
-				headers: {
-					...this.getHeaders(),
-					Accept: "application/json",
-					"Content-Type": "application/json",
-				},
-			});
-
-			if (!response.ok) {
-				const { code, message } = ERROR_CODES.API_REQUEST_FAILED;
-				throw new Error(`${code}: ${message} (${response.statusText})`);
-			}
-
-			if (!response.body) {
-				throw new Error("No response body received for streaming");
-			}
-
-			const reader = response.body.getReader();
-
-			try {
-				while (true) {
-					const { done, value } = await reader.read();
-					if (done) break;
-
-					yield new TextDecoder().decode(value);
-				}
-			} finally {
-				reader.releaseLock();
-			}
 		} catch (error) {
 			if (error instanceof z.ZodError) {
 				const { code, message } = ERROR_CODES.INVALID_INPUT;
