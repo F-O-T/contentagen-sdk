@@ -10,6 +10,7 @@ import {
 	ListContentByAgentInputSchema,
 	RelatedSlugsResponseSchema,
 	StreamAssistantResponseInputSchema,
+	StreamAssistantResponseOutputSchema,
 } from "./types";
 
 export const ERROR_CODES = {
@@ -259,13 +260,13 @@ export class ContentaGenSDK {
 
 	async streamAssistantResponse(
 		params: z.input<typeof StreamAssistantResponseInputSchema>,
-	): Promise<z.infer<typeof StreamAssistantResponseInputSchema>> {
+	): Promise<z.infer<typeof StreamAssistantResponseOutputSchema>> {
 		try {
 			const validatedParams = StreamAssistantResponseInputSchema.parse(params);
 			return this._query(
 				TRPC_ENDPOINTS.streamAssistantResponse,
 				validatedParams,
-				StreamAssistantResponseInputSchema,
+				StreamAssistantResponseOutputSchema,
 			);
 		} catch (error) {
 			if (error instanceof z.ZodError) {
