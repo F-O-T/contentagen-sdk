@@ -103,7 +103,7 @@ export const ListContentByAgentInputSchema = z.object({
 			message: "Invalid content status. Must be one of: draft, approved.",
 		})
 		.array(),
-	agentId: z.array(z.uuid("Invalid Agent ID format.")),
+	agentIds: z.array(z.uuid("Invalid Agent ID format.")),
 	limit: z.number().min(1).max(100).optional().default(10),
 	page: z.number().min(1).optional().default(1),
 });

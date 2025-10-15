@@ -1,6 +1,6 @@
 {
 	"name": "@contentagen/sdk",
-	"version": "0.15.4",
+	"version": "0.15.5",
 	"private": false,
 	"type": "module",
 	"description": "Official TypeScript SDK to interact with the ContentaGen API. Provides lightweight client methods for listing and retrieving content, automatic input validation, date parsing, and robust error handling.",
@@ -29,6 +29,13 @@
 		"typecheck": "tsc --build --noEmit --emitDeclarationOnly false",
 		"publish": "npm publish --access public",
 		"test": "vitest run ",
+		"test:sdk": "bun run tests/run-all-tests.ts",
+		"test:author": "bun run tests/test-author-endpoint.ts",
+		"test:related-slugs": "bun run tests/test-related-slugs-endpoint.ts",
+		"test:assistant": "bun run tests/test-assistant-endpoint.ts",
+		"test:content-list": "bun run tests/test-content-list-endpoint.ts",
+		"test:content-slug": "bun run tests/test-content-slug-endpoint.ts",
+		"test:content-image": "bun run tests/test-content-image-endpoint.ts",
 		"release": "bun run scripts/create-release.ts"
 	},
 	"dependencies": {

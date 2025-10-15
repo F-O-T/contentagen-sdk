@@ -2,6 +2,15 @@
 
 All notable changes to this package will be documented in this file.
 
+## [0.15.5] - 2025-10-15
+
+### Changed
+- **Console Log Cleanup**: Removed all console.log statements from SDK methods for cleaner production usage
+  - Removed debug logging from constructor, `_get` method, and `streamAssistantResponse` method
+  - Removed console.error statements from error handling
+  - SDK methods now run silently without console output
+  - Updated README examples to remove console.log usage
+
 ## [0.15.4] - 2025-10-14
 
 ### Fixed
