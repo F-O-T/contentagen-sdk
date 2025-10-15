@@ -533,7 +533,7 @@ describe("ContentaGenSDK.streamAssistantResponse", () => {
 					expect(true).toBe(true);
 				} catch (error) {
 					// If it throws, it should be an API error, not validation error
-					expect(error.message).not.toContain("SDK_E004");
+					expect((error as Error).message).not.toContain("SDK_E004");
 				}
 			} else {
 				const stream = sdk.streamAssistantResponse(testCase.input as any);
@@ -570,5 +570,200 @@ describe("ContentaGenSDK.streamAssistantResponse", () => {
 		// Check for URL encoded version of the special characters
 		expect(calledUrl).toContain("Test+message+with+special+chars");
 		expect(calledUrl).toContain("%21%40%23%24%25"); // URL encoded !@#$%
+	});
+});
+
+// Locale and language tests
+describe("ContentaGenSDK locale functionality", () => {
+	beforeEach(() => {
+		sdk = createSdk({ apiKey, locale: "pt-BR" });
+		fetchMock = vi.fn().mockResolvedValue({
+			ok: true,
+			json: () => Promise.resolve(mockListResponse),
+			statusText: "OK",
+		});
+		globalThis.fetch = fetchMock as unknown as typeof fetch;
+	});
+
+	afterEach(() => {
+		vi.restoreAllMocks();
+	});
+
+	it("includes x-locale header in regular API requests", async () => {
+		await sdk.listContentByAgent(validListInput);
+
+		expect(fetchMock).toHaveBeenCalledTimes(1);
+		expect(fetchMock).toHaveBeenCalledWith(
+			expect.any(String),
+			{
+				headers: {
+					"sdk-api-key": apiKey,
+					"x-locale": "pt-BR",
+				},
+			},
+		);
+	});
+
+	it("includes x-locale header in streaming requests", async () => {
+		const stream = new ReadableStream({
+			start(controller) {
+				controller.close();
+			},
+		});
+
+		fetchMock.mockResolvedValueOnce({
+			ok: true,
+			body: stream,
+			statusText: "OK",
+		});
+
+		for await (const chunk of sdk.streamAssistantResponse({ message: "Test" })) {
+			// Consume the stream
+		}
+
+		expect(fetchMock).toHaveBeenCalledTimes(1);
+		expect(fetchMock).toHaveBeenCalledWith(
+			expect.any(String),
+			{
+				headers: {
+					"sdk-api-key": apiKey,
+					"x-locale": "pt-BR",
+				},
+			},
+		);
+	});
+
+	it("does not include x-locale header when locale is not provided", async () => {
+		const sdkWithoutLocale = createSdk({ apiKey });
+		fetchMock = vi.fn().mockResolvedValue({
+			ok: true,
+			json: () => Promise.resolve(mockListResponse),
+			statusText: "OK",
+		});
+		globalThis.fetch = fetchMock as unknown as typeof fetch;
+
+		await sdkWithoutLocale.listContentByAgent(validListInput);
+
+		expect(fetchMock).toHaveBeenCalledTimes(1);
+		expect(fetchMock).toHaveBeenCalledWith(
+			expect.any(String),
+			{
+				headers: {
+					"sdk-api-key": apiKey,
+				},
+			},
+		);
+	});
+
+	it("handles language field with default value in streamAssistantResponse", async () => {
+		const stream = new ReadableStream({
+			start(controller) {
+				controller.close();
+			},
+		});
+
+		fetchMock.mockResolvedValueOnce({
+			ok: true,
+			body: stream,
+			statusText: "OK",
+		});
+
+		// Test without language field (should default to "en")
+		for await (const chunk of sdk.streamAssistantResponse({ message: "Test" })) {
+			// Consume the stream
+		}
+
+		expect(fetchMock).toHaveBeenCalledTimes(1);
+		const calledUrl = fetchMock.mock.calls[0][0];
+		expect(calledUrl).toContain("input=");
+		expect(calledUrl).toContain("language"); // Should include the default language
+
+		// Test with explicit language field
+		fetchMock.mockResolvedValueOnce({
+			ok: true,
+			body: stream,
+			statusText: "OK",
+		});
+
+		for await (const chunk of sdk.streamAssistantResponse({ message: "Test", language: "pt" })) {
+			// Consume the stream
+		}
+
+		expect(fetchMock).toHaveBeenCalledTimes(2);
+		const secondCallUrl = fetchMock.mock.calls[1][0];
+		expect(secondCallUrl).toContain("language");
+		expect(secondCallUrl).toContain("pt"); // Should include explicit language
+	});
+
+	it("validates language field in streamAssistantResponse", async () => {
+		const stream = sdk.streamAssistantResponse({
+			message: "Test",
+			language: "invalid" as any
+		});
+		await expect(stream.next()).rejects.toThrow(/SDK_E004.*Invalid input/);
+	});
+
+	it("accepts both supported language values", async () => {
+		const stream = new ReadableStream({
+			start(controller) {
+				controller.close();
+			},
+		});
+
+		fetchMock.mockResolvedValue({
+			ok: true,
+			body: stream,
+			statusText: "OK",
+		});
+
+		// Test English
+		for await (const chunk of sdk.streamAssistantResponse({ message: "Test", language: "en" })) {
+			// Should not throw
+		}
+
+		// Test Portuguese
+		for await (const chunk of sdk.streamAssistantResponse({ message: "Test", language: "pt" })) {
+			// Should not throw
+		}
+
+		expect(fetchMock).toHaveBeenCalledTimes(2);
+	});
+
+	it("uses custom host when provided", async () => {
+		const customSdk = createSdk({
+			apiKey,
+			host: "https://custom.api.example.com"
+		});
+
+		fetchMock = vi.fn().mockResolvedValue({
+			ok: true,
+			json: () => Promise.resolve(mockListResponse),
+			statusText: "OK",
+		});
+		globalThis.fetch = fetchMock as unknown as typeof fetch;
+
+		await customSdk.listContentByAgent(validListInput);
+
+		expect(fetchMock).toHaveBeenCalledTimes(1);
+		const calledUrl = fetchMock.mock.calls[0][0];
+		expect(calledUrl).toContain("https://custom.api.example.com/trpc");
+		expect(calledUrl).not.toContain("api.contentagen.com");
+	});
+
+	it("defaults to production API when no host is provided", async () => {
+		const defaultSdk = createSdk({ apiKey });
+
+		fetchMock = vi.fn().mockResolvedValue({
+			ok: true,
+			json: () => Promise.resolve(mockListResponse),
+			statusText: "OK",
+		});
+		globalThis.fetch = fetchMock as unknown as typeof fetch;
+
+		await defaultSdk.listContentByAgent(validListInput);
+
+		expect(fetchMock).toHaveBeenCalledTimes(1);
+		const calledUrl = fetchMock.mock.calls[0][0];
+		expect(calledUrl).toContain("https://api.contentagen.com/trpc");
 	});
 });

@@ -115,6 +115,7 @@ export const GetContentBySlugInputSchema = z.object({
 
 export const StreamAssistantResponseInputSchema = z.object({
 	message: z.string().min(1, "Message is required"),
+	language: z.enum(["en", "pt"]).optional().default("en"),
 });
 
 // Reusable image schema for SDK responses

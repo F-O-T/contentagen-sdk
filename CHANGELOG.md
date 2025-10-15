@@ -2,6 +2,31 @@
 
 All notable changes to this package will be documented in this file.
 
+## [0.15.0] - 2025-10-14
+
+### Added
+- **Locale Support**: New `locale` parameter in SDK constructor to set `x-locale` header for all API requests
+  - Supports internationalization by automatically including locale information in HTTP headers
+  - Optional parameter that can be set during SDK initialization
+- **Custom Host Support**: New `host` parameter in SDK constructor to override default API endpoint
+  - Allows usage with different API environments (staging, custom deployments, etc.)
+  - Defaults to production API when not specified
+- **Enhanced Language Support**: Added `language` field to `streamAssistantResponse` input schema
+  - Supports `"en"` (English) and `"pt"` (Portuguese) languages
+  - Defaults to `"en"` when not specified
+  - Validates language input with proper error messages
+
+### Changed
+- **SDK Constructor**: Updated to accept optional `locale` and `host` parameters
+- **API Headers**: All requests now include `x-locale` header when locale is configured
+- **Stream Assistant Response**: Enhanced with language selection for localized AI responses
+- **Default Behavior**: Improved URL resolution to use custom host when provided
+
+### Enhanced
+- **Test Coverage**: Added comprehensive tests for locale and host functionality
+- **Type Safety**: Updated TypeScript interfaces to reflect new optional parameters
+- **Documentation**: Updated README with examples for new configuration options
+
 ## [0.14.0] - 2025-10-14
 
 ### Added

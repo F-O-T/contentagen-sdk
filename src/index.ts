@@ -44,21 +44,37 @@ const PRODUCTION_API_URL = "https://api.contentagen.com";
 
 export interface SdkConfig {
 	apiKey: string;
+	locale?: string;
+	host?: string;
 }
 
 export class ContentaGenSDK {
 	private trpcUrl: string;
 	private apiKey: string;
+	private locale?: string;
 
 	constructor(config: SdkConfig) {
 		if (!config.apiKey) {
 			throw new Error("apiKey is required to initialize the ContentaGenSDK");
 		}
 
-		const baseUrl = PRODUCTION_API_URL;
+		const baseUrl = config.host || PRODUCTION_API_URL;
 
 		this.trpcUrl = `${baseUrl}/trpc`;
 		this.apiKey = config.apiKey;
+		this.locale = config.locale;
+	}
+
+	private getHeaders(): Record<string, string> {
+		const headers: Record<string, string> = {
+			"sdk-api-key": this.apiKey,
+		};
+
+		if (this.locale) {
+			headers["x-locale"] = this.locale;
+		}
+
+		return headers;
 	}
 
 	private transformDates(data: unknown): unknown {
@@ -121,7 +137,7 @@ export class ContentaGenSDK {
 		}
 
 		const response = await fetch(url.toString(), {
-			headers: { "sdk-api-key": this.apiKey },
+			headers: this.getHeaders(),
 		});
 
 		if (!response.ok) {
@@ -250,7 +266,7 @@ export class ContentaGenSDK {
 			url.searchParams.set("input", SuperJSON.stringify(validatedParams));
 
 			const response = await fetch(url.toString(), {
-				headers: { "sdk-api-key": this.apiKey },
+				headers: this.getHeaders(),
 			});
 
 			if (!response.ok) {
