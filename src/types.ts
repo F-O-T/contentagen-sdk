@@ -113,6 +113,10 @@ export const GetContentBySlugInputSchema = z.object({
 	agentId: z.uuid("Invalid Agent ID format."),
 });
 
+export const StreamAssistantResponseInputSchema = z.object({
+	message: z.string().min(1, "Message is required"),
+});
+
 // Reusable image schema for SDK responses
 export const ImageSchema = z
 	.object({

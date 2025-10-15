@@ -347,3 +347,228 @@ describe("ContentaGenSDK.getContentImage", () => {
 		);
 	});
 });
+
+// streamAssistantResponse tests
+const validStreamInput = { message: "Hello, assistant!" };
+const mockStreamChunks = ["Hello", " there", "!", " How", " can", " I", " help", " you", "?"];
+
+describe("ContentaGenSDK.streamAssistantResponse", () => {
+	beforeEach(() => {
+		sdk = createSdk({ apiKey });
+	});
+
+	afterEach(() => {
+		vi.restoreAllMocks();
+	});
+
+	it("streams response chunks for valid input", async () => {
+		// Create a mock readable stream
+		const stream = new ReadableStream({
+			start(controller) {
+				mockStreamChunks.forEach((chunk) => {
+					controller.enqueue(new TextEncoder().encode(chunk));
+				});
+				controller.close();
+			},
+		});
+
+		fetchMock = vi.fn().mockResolvedValue({
+			ok: true,
+			body: stream,
+			statusText: "OK",
+		});
+		globalThis.fetch = fetchMock as unknown as typeof fetch;
+
+		const chunks: string[] = [];
+		for await (const chunk of sdk.streamAssistantResponse(validStreamInput)) {
+			chunks.push(chunk);
+		}
+
+		expect(chunks).toEqual(mockStreamChunks);
+		expect(fetchMock).toHaveBeenCalledTimes(1);
+		expect(fetchMock).toHaveBeenCalledWith(
+			expect.stringContaining("/trpc/sdk.streamAssistantResponse"),
+			{
+				headers: { "sdk-api-key": apiKey },
+			},
+		);
+	});
+
+	it("throws on invalid input", async () => {
+		// Test empty string
+		const stream1 = sdk.streamAssistantResponse({ message: "" });
+		await expect(stream1.next()).rejects.toThrow(/SDK_E004.*Message is required/);
+
+		// Test non-string type
+		const stream2 = sdk.streamAssistantResponse({ message: 123 as any });
+		await expect(stream2.next()).rejects.toThrow(/SDK_E004/);
+	});
+
+	it("throws on API error", async () => {
+		fetchMock = vi.fn().mockResolvedValue({
+			ok: false,
+			statusText: "Internal Server Error",
+			body: null,
+		});
+		globalThis.fetch = fetchMock as unknown as typeof fetch;
+
+		const stream = sdk.streamAssistantResponse(validStreamInput);
+		await expect(stream.next()).rejects.toThrow(/SDK_E002/);
+	});
+
+	it("throws when response body is null", async () => {
+		fetchMock = vi.fn().mockResolvedValue({
+			ok: true,
+			body: null,
+			statusText: "OK",
+		});
+		globalThis.fetch = fetchMock as unknown as typeof fetch;
+
+		const stream = sdk.streamAssistantResponse(validStreamInput);
+		await expect(stream.next()).rejects.toThrow("No response body received for streaming");
+	});
+
+	it("handles empty stream", async () => {
+		// Create a mock empty stream
+		const stream = new ReadableStream({
+			start(controller) {
+				controller.close();
+			},
+		});
+
+		fetchMock = vi.fn().mockResolvedValue({
+			ok: true,
+			body: stream,
+			statusText: "OK",
+		});
+		globalThis.fetch = fetchMock as unknown as typeof fetch;
+
+		const chunks: string[] = [];
+		for await (const chunk of sdk.streamAssistantResponse(validStreamInput)) {
+			chunks.push(chunk);
+		}
+
+		expect(chunks).toEqual([]);
+		expect(fetchMock).toHaveBeenCalledTimes(1);
+	});
+
+	it("handles stream with single chunk", async () => {
+		const singleChunk = ["Single response"];
+
+		// Create a mock stream with single chunk
+		const stream = new ReadableStream({
+			start(controller) {
+				controller.enqueue(new TextEncoder().encode(singleChunk[0]));
+				controller.close();
+			},
+		});
+
+		fetchMock = vi.fn().mockResolvedValue({
+			ok: true,
+			body: stream,
+			statusText: "OK",
+		});
+		globalThis.fetch = fetchMock as unknown as typeof fetch;
+
+		const chunks: string[] = [];
+		for await (const chunk of sdk.streamAssistantResponse(validStreamInput)) {
+			chunks.push(chunk);
+		}
+
+		expect(chunks).toEqual(singleChunk);
+		expect(fetchMock).toHaveBeenCalledTimes(1);
+	});
+
+	it("handles stream errors", async () => {
+		// Create a mock stream that errors
+		const stream = new ReadableStream({
+			start(controller) {
+				controller.error(new Error("Stream error"));
+			},
+		});
+
+		fetchMock = vi.fn().mockResolvedValue({
+			ok: true,
+			body: stream,
+			statusText: "OK",
+		});
+		globalThis.fetch = fetchMock as unknown as typeof fetch;
+
+		const streamGenerator = sdk.streamAssistantResponse(validStreamInput);
+		await expect(streamGenerator.next()).rejects.toThrow("Stream error");
+	});
+
+	it("validates input parameters correctly", async () => {
+		const testCases = [
+			{ input: { message: "Valid message" }, shouldPass: true },
+			{ input: { message: "" }, shouldPass: false, expectedError: "Message is required" },
+			{ input: { message: "a".repeat(1000) }, shouldPass: true },
+			{ input: {}, shouldPass: false },
+			{ input: { message: null }, shouldPass: false },
+			{ input: { message: undefined }, shouldPass: false },
+		];
+
+		for (const testCase of testCases) {
+			if (testCase.shouldPass) {
+				// Should not throw during validation
+				const stream = new ReadableStream({
+					start(controller) {
+						controller.close();
+					},
+				});
+
+				fetchMock = vi.fn().mockResolvedValue({
+					ok: true,
+					body: stream,
+					statusText: "OK",
+				});
+				globalThis.fetch = fetchMock as unknown as typeof fetch;
+
+				const chunks: string[] = [];
+				try {
+					for await (const chunk of sdk.streamAssistantResponse(testCase.input as any)) {
+						chunks.push(chunk);
+					}
+					// If we get here, validation passed
+					expect(true).toBe(true);
+				} catch (error) {
+					// If it throws, it should be an API error, not validation error
+					expect(error.message).not.toContain("SDK_E004");
+				}
+			} else {
+				const stream = sdk.streamAssistantResponse(testCase.input as any);
+				const expectedError = (testCase as any).expectedError || "SDK_E004";
+				await expect(stream.next()).rejects.toThrow(expectedError);
+			}
+		}
+	});
+
+	it("properly constructs URL with input parameters", async () => {
+		const stream = new ReadableStream({
+			start(controller) {
+				controller.close();
+			},
+		});
+
+		fetchMock = vi.fn().mockResolvedValue({
+			ok: true,
+			body: stream,
+			statusText: "OK",
+		});
+		globalThis.fetch = fetchMock as unknown as typeof fetch;
+
+		const input = { message: "Test message with special chars: !@#$%" };
+		for await (const chunk of sdk.streamAssistantResponse(input)) {
+			// Consume the stream
+		}
+
+		expect(fetchMock).toHaveBeenCalledTimes(1);
+		const calledUrl = fetchMock.mock.calls[0][0];
+		expect(calledUrl).toContain("/trpc/sdk.streamAssistantResponse");
+		expect(calledUrl).toContain("input=");
+		// The input should be URL encoded with SuperJSON
+		// Check for URL encoded version of the special characters
+		expect(calledUrl).toContain("Test+message+with+special+chars");
+		expect(calledUrl).toContain("%21%40%23%24%25"); // URL encoded !@#$%
+	});
+});

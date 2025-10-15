@@ -9,6 +9,7 @@ import {
 	ImageSchema,
 	ListContentByAgentInputSchema,
 	RelatedSlugsResponseSchema,
+	StreamAssistantResponseInputSchema,
 } from "./types";
 
 export const ERROR_CODES = {
@@ -36,6 +37,7 @@ export const TRPC_ENDPOINTS = {
 	getRelatedSlugs: "getRelatedSlugs",
 	getAuthorByAgentId: "getAuthorByAgentId",
 	getContentImage: "getContentImage",
+	streamAssistantResponse: "streamAssistantResponse",
 };
 
 const PRODUCTION_API_URL = "https://api.contentagen.com";
@@ -97,8 +99,8 @@ export class ContentaGenSDK {
 			// Safely extract json property if exists, or use responseData
 			const actualData =
 				typeof responseData === "object" &&
-				responseData !== null &&
-				"json" in responseData
+					responseData !== null &&
+					"json" in responseData
 					? (responseData as { json: unknown }).json
 					: responseData;
 			const transformedData = this.transformDates(actualData);
@@ -238,6 +240,52 @@ export class ContentaGenSDK {
 			throw error;
 		}
 	}
+
+	async *streamAssistantResponse(
+		params: z.input<typeof StreamAssistantResponseInputSchema>,
+	): AsyncGenerator<string, void, unknown> {
+		try {
+			const validatedParams = StreamAssistantResponseInputSchema.parse(params);
+			const url = new URL(`${this.trpcUrl}/sdk.${TRPC_ENDPOINTS.streamAssistantResponse}`);
+			url.searchParams.set("input", SuperJSON.stringify(validatedParams));
+
+			const response = await fetch(url.toString(), {
+				headers: { "sdk-api-key": this.apiKey },
+			});
+
+			if (!response.ok) {
+				const { code, message } = ERROR_CODES.API_REQUEST_FAILED;
+				throw new Error(`${code}: ${message} (${response.statusText})`);
+			}
+
+			if (!response.body) {
+				throw new Error("No response body received for streaming");
+			}
+
+			const reader = response.body.getReader();
+			const decoder = new TextDecoder();
+
+			try {
+				while (true) {
+					const { done, value } = await reader.read();
+					if (done) break;
+
+					const chunk = decoder.decode(value, { stream: true });
+					yield chunk;
+				}
+			} finally {
+				reader.releaseLock();
+			}
+		} catch (error) {
+			if (error instanceof z.ZodError) {
+				const { code, message } = ERROR_CODES.INVALID_INPUT;
+				throw new Error(
+					`${code}: ${message} for streamAssistantResponse: ${error.issues.map((e) => e.message).join(", ")}`,
+				);
+			}
+			throw error;
+		}
+	}
 }
 
 export const createSdk = (config: SdkConfig): ContentaGenSDK => {
@@ -253,4 +301,5 @@ export {
 	ImageSchema,
 	ListContentByAgentInputSchema,
 	ShareStatusValues,
+	StreamAssistantResponseInputSchema,
 } from "./types";

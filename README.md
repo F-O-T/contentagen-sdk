@@ -8,7 +8,8 @@ Official TypeScript SDK for interacting with the ContentaGen API.
 - Automatic date parsing for `createdAt` / `updatedAt`
 - Consistent error codes and robust error handling
 - Agents can be used as authors (author info is derived from the agent config)
-- New procedures: `getAuthorByAgentId`, `getRelatedSlugs`, `getContentImage`
+- New procedures: `getAuthorByAgentId`, `getRelatedSlugs`, `getContentImage`, `streamAssistantResponse`
+- Streaming support for real-time AI assistant responses
 - Selected schemas and types exported for advanced usage
 
 ## Installation
@@ -61,6 +62,11 @@ async function example() {
 	// Get the image data for a specific content ID
 	const image = await sdk.getContentImage({ contentId: post.id });
 	console.log("Post image:", image?.contentType, image?.data.length);
+
+	// Stream assistant response
+	for await (const chunk of sdk.streamAssistantResponse({ message: "Hello, assistant!" })) {
+		process.stdout.write(chunk);
+	}
 }
 ```
 
@@ -78,6 +84,7 @@ async function example() {
   - `AuthorByAgentIdSchema`
   - `ImageSchema`
   - `ShareStatusValues`
+  - `StreamAssistantResponseInputSchema`
 
 Note: The PostHog helper is currently internal and not exported from the package entry. See "PostHog Analytics Helper" below for usage details when working inside this repository.
 
@@ -109,6 +116,11 @@ Note: The PostHog helper is currently internal and not exported from the package
 - `sdk.getContentImage(params)`
   - params: `{ contentId: string }`
   - Returns: `{ data: string; contentType: string } | null`
+
+- `sdk.streamAssistantResponse(params)`
+  - params (validated by `StreamAssistantResponseInputSchema`):
+    - `message`: string — required
+  - Returns: `AsyncGenerator<string, void, unknown>` — async generator that yields streaming response chunks
 
 ### PostHog Analytics Helper
 
