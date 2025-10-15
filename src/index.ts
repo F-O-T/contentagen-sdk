@@ -270,7 +270,7 @@ export class ContentaGenSDK {
 			const response = await fetch(url.toString(), {
 				headers: {
 					...this.getHeaders(),
-					Accept: "text/event-stream",
+					Accept: "application/json",
 					"Content-Type": "application/json",
 				},
 			});
@@ -285,15 +285,13 @@ export class ContentaGenSDK {
 			}
 
 			const reader = response.body.getReader();
-			const decoder = new TextDecoder();
 
 			try {
 				while (true) {
 					const { done, value } = await reader.read();
 					if (done) break;
 
-					const chunk = decoder.decode(value, { stream: true });
-					yield chunk;
+					yield new TextDecoder().decode(value);
 				}
 			} finally {
 				reader.releaseLock();

@@ -2,6 +2,14 @@
 
 All notable changes to this package will be documented in this file.
 
+## [0.15.2] - 2025-10-14
+
+### Fixed
+- **Streaming Implementation**: Simplified `streamAssistantResponse` chunk decoding to match standard streaming patterns
+  - Removed `TextDecoder` stream option to prevent UTF-8 sequence issues
+  - Simplified chunk handling with direct `new TextDecoder().decode(value)` calls
+  - Improved streaming reliability and compatibility
+
 ## [0.15.1] - 2025-10-14
 
 ### Fixed
