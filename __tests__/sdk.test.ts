@@ -533,7 +533,7 @@ describe("ContentaGenSDK.streamAssistantResponse", () => {
 					expect(true).toBe(true);
 				} catch (error) {
 					// If it throws, it should be an API error, not validation error
-					expect(error.message).not.toContain("SDK_E004");
+					expect((error as Error).message).not.toContain("SDK_E004");
 				}
 			} else {
 				const stream = sdk.streamAssistantResponse(testCase.input as any);
