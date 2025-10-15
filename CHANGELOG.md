@@ -2,6 +2,15 @@
 
 All notable changes to this package will be documented in this file.
 
+## [0.15.3] - 2025-10-14
+
+### Changed
+- **streamAssistantResponse Method**: Refactored from streaming async generator to simple query method
+  - Changed from `AsyncGenerator<string>` to standard `Promise<T>` return type
+  - Removed internal streaming logic and now uses the `_query` method
+  - Improved consistency with other SDK methods and simplified implementation
+  - Updated method signature to return validated response data
+
 ## [0.15.2] - 2025-10-14
 
 ### Fixed
