@@ -2,6 +2,14 @@
 
 All notable changes to this package will be documented in this file.
 
+## [0.15.4] - 2025-10-14
+
+### Fixed
+- **streamAssistantResponse Schema**: Updated to use proper output schema instead of input schema
+  - Now correctly returns `StreamAssistantResponseOutputSchema` instead of input schema
+  - Added `StreamAssistantResponseOutputSchema` to exported schemas for type safety
+  - Updated method signature and documentation to reflect correct return type
+
 ## [0.15.3] - 2025-10-14
 
 ### Changed

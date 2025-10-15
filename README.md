@@ -92,6 +92,7 @@ async function example() {
   - `ImageSchema`
   - `ShareStatusValues`
   - `StreamAssistantResponseInputSchema`
+  - `StreamAssistantResponseOutputSchema`
 
 Note: The PostHog helper is currently internal and not exported from the package entry. See "PostHog Analytics Helper" below for usage details when working inside this repository.
 
@@ -128,7 +129,7 @@ Note: The PostHog helper is currently internal and not exported from the package
   - params (validated by `StreamAssistantResponseInputSchema`):
     - `message`: string — required
     - `language`: `"en" | "pt"` — optional, defaults to `"en"`
-  - Returns: `Promise<StreamAssistantResponseInputSchema>` — standard promise returning validated response data
+  - Returns: `Promise<StreamAssistantResponseOutputSchema>` — standard promise returning validated response data
   - Note: Uses the `_query` method for consistency with other SDK methods
 
 ### PostHog Analytics Helper
