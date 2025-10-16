@@ -45,7 +45,7 @@ export const ContentRequestSchema = z.object({
 export const ContentStatusValues = ["draft", "approved"] as const;
 
 // Share status enum values
-export const ShareStatusValues = ["private", "public"] as const;
+export const ShareStatusValues = ["private", "shared"] as const;
 
 export const VoiceConfigSchema = z.object({
 	communication: z.enum(["first_person", "third_person"]),
@@ -103,7 +103,7 @@ export const ListContentByAgentInputSchema = z.object({
 			message: "Invalid content status. Must be one of: draft, approved.",
 		})
 		.array(),
-	agentIds: z.array(z.uuid("Invalid Agent ID format.")),
+	agentId: z.uuid("Invalid Agent ID format."),
 	limit: z.number().min(1).max(100).optional().default(10),
 	page: z.number().min(1).optional().default(1),
 });
