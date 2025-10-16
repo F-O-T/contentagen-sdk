@@ -2,6 +2,23 @@
 
 All notable changes to this package will be documented in this file.
 
+## [0.15.6] - 2025-10-16
+
+### Added
+- **Enhanced Test Scripts**: Added comprehensive test scripts for SDK functionality
+  - `test-content-image.ts`: Test script for `getContentImage` functionality with image saving and validation
+  - `test-author-by-agent-id.ts`: Test script for `getAuthorByAgentId` functionality with profile photo handling
+  - `test-list-content-by-agent.ts`: Test script for `listContentByAgent` functionality with pagination and filtering
+  - All scripts include comprehensive error handling, input validation, and detailed output formatting
+  - Support for environment variable configuration for API keys and IDs
+  - Automatic file export for images and JSON results
+
+### Changed
+- **Test Organization**: Improved test script structure and consistency
+  - Standardized error handling and output formatting across all test scripts
+  - Enhanced troubleshooting guidance and debugging information
+  - Better environment variable support for credentials and configuration
+
 ## [0.15.5] - 2025-10-15
 
 ### Changed

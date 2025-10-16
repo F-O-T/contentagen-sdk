@@ -142,9 +142,9 @@ export class ContentaGenSDK {
 	): Promise<ContentList> {
 		try {
 			const validatedParams = ListContentByAgentInputSchema.parse(params);
-			const { agentIds, limit, page, status } = validatedParams;
+			const { agentId, limit, page, status } = validatedParams;
 			return this._get(
-				`${API_ENDPOINTS.listContentByAgent}/${agentIds.join(",")}`,
+				`${API_ENDPOINTS.listContentByAgent}/${agentId}`,
 				{ limit, page, status },
 				ContentListResponseSchema,
 			);
