@@ -2,6 +2,20 @@
 
 All notable changes to this package will be documented in this file.
 
+## [0.15.10] - 2025-10-18
+
+### Fixed
+- **Layout Validation**: Removed "interview" option from ContentRequest layout enum to match API constraints
+  - Updated `ContentRequestSchema` to only accept "tutorial", "article", and "changelog" layouts
+  - Improves validation accuracy and prevents invalid layout submissions
+
+### Changed
+- **Enhanced Publish Script**: Improved `publish-release.ts` with robust publication handling
+  - Added retry mechanism with configurable delays and maximum attempts
+  - Enhanced error handling to detect when a version is already available on npm
+  - Added `waitForPublication` function to verify successful package publication
+  - Improved logging and error messaging for better debugging during release process
+
 ## [0.15.9] - 2025-10-18
 
 ### Changed

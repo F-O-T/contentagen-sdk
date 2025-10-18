@@ -18,6 +18,27 @@ export async function isVersionPublished(
 	}
 }
 
+function sleep(ms: number) {
+	return new Promise((resolve) => setTimeout(resolve, ms));
+}
+
+async function waitForPublication(
+	pkgName: string,
+	version: string,
+	maxAttempts = 6,
+	delayMs = 5000,
+): Promise<boolean> {
+	for (let attempt = 0; attempt < maxAttempts; attempt += 1) {
+		if (await isVersionPublished(pkgName, version)) {
+			return true;
+		}
+		if (attempt < maxAttempts - 1) {
+			await sleep(delayMs);
+		}
+	}
+	return false;
+}
+
 async function main() {
 	const pkgJson = JSON.parse(await fs.readFile("package.json", "utf8"));
 	const pkgName = pkgJson.name;
@@ -42,7 +63,21 @@ async function main() {
 
 	// Publish step
 	console.log("Publishing to npm...");
-	execSync("npm publish", { stdio: "inherit" });
+	try {
+		execSync("npm publish --access public", { stdio: "inherit" });
+	} catch (error) {
+		console.warn(
+			"npm publish failed, verifying whether the version is already available...",
+		);
+		const publishedAfterFailure = await waitForPublication(pkgName, version);
+		if (publishedAfterFailure) {
+			console.log(
+				`Version ${version} is already available on npm. Treating publish as successful.`,
+			);
+			return;
+		}
+		throw error;
+	}
 
 	console.log(`Published version ${version} to npm.`);
 }
