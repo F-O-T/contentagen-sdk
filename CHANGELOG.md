@@ -2,13 +2,7 @@
 
 All notable changes to this package will be documented in this file.
 
-## [0.15.7] - 2025-10-18
-
-### Fixed
-- **UUID Validation Issue**: Changed `agentId` field validation from `z.uuid()` to `z.string()` in multiple schemas
-  - Updated `ListContentByAgentInputSchema`, `GetContentBySlugInputSchema`, and `StreamAssistantResponseInputSchema`
-  - Resolves UUID validation errors when using string-based agent IDs
-  - Maintains compatibility while improving flexibility for agent ID formats
+## [0.15.8] - 2025-10-18
 
 ### Changed
 - **Enhanced Content Status Validation**: Improved `ListContentByAgentInputSchema` status field handling
@@ -31,6 +25,14 @@ All notable changes to this package will be documented in this file.
   - Better stream reading with proper UTF-8 decoding and lock management
   - Added trailing chunk processing for complete data capture
 - **URL Construction Fix**: Normalized base URL by removing trailing slashes to prevent double slashes in API endpoints
+
+## [0.15.7] - 2025-10-18
+
+### Fixed
+- **UUID Validation Issue**: Changed `agentId` field validation from `z.uuid()` to `z.string()` in multiple schemas
+  - Updated `ListContentByAgentInputSchema`, `GetContentBySlugInputSchema`, and `StreamAssistantResponseInputSchema`
+  - Resolves UUID validation errors when using string-based agent IDs
+  - Maintains compatibility while improving flexibility for agent ID formats
 
 ### Added
 - **GitHub Issue Templates**: Added comprehensive issue templates for better bug tracking and feature requests
