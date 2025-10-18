@@ -4,14 +4,13 @@ Official TypeScript SDK for interacting with the ContentaGen API.
 
 ## Features
 - Lightweight client for ContentaGen API
-- Input validation with Zod schemas
+- Input validation with Zod schemas and shared schema exports
 - Automatic date parsing for `createdAt` / `updatedAt`
 - Consistent error codes and robust error handling
 - Locale support via `x-locale` header for internationalization
-- Agents can be used as authors (author info is derived from the agent config)
-- New procedures: `getAuthorByAgentId`, `getRelatedSlugs`, `getContentImage`, `streamAssistantResponse`
-- AI assistant response support with language selection
-- Selected schemas and types exported for advanced usage
+- Agent-aware author, content, and related slug helpers
+- Streaming AI assistant responses with runtime context awareness
+- Image fetch helpers that proxy assets as base64 payloads
 
 ## Installation
 
@@ -33,7 +32,7 @@ import { createSdk } from "@contentagen/sdk";
 const sdk = createSdk({
 	apiKey: "YOUR_API_KEY",
 	locale: "en-US", // Optional: sets the x-locale header for all requests
-	host: "https://custom.api.example.com" // Optional: custom API host
+	host: "https://custom.api.example.com", // Optional: custom API host
 });
 
 async function example() {
@@ -41,8 +40,8 @@ async function example() {
 
 	// List content by agent(s)
 	const listParams = {
-		agentId: [agentId], // array of UUIDs
-		status: ["approved", "draft"], // required array of statuses
+		agentId, // required agent ID
+		status: ["approved", "draft"], // optional: string or array, defaults to approved
 		limit: 10, // optional, default 10
 		page: 1, // optional, default 1
 	};
@@ -67,11 +66,15 @@ async function example() {
 	// Use image?.contentType and image?.data as needed
 
 	// Get assistant response
-	const response = await sdk.streamAssistantResponse({
+	const stream = sdk.streamAssistantResponse({
 		message: "Hello, assistant!",
-		language: "en" // Optional: "en" or "pt", defaults to "en"
+		agentId,
+		language: "en", // Optional, defaults to "en"
 	});
-	// Use response data as needed
+
+	for await (const chunk of stream) {
+		// Consume streaming chunks as they arrive
+	}
 }
 ```
 
@@ -80,7 +83,7 @@ async function example() {
 ### Exports
 - `createSdk(config: { apiKey: string; locale?: string; host?: string }): ContentaGenSDK` — factory for SDK instance
 - `ContentaGenSDK` class — all methods available on instances
-- `type ShareStatus` — union type: `"private" | "public"`
+- `type ShareStatus` — union type: `"private" | "shared"`
 - Zod schemas for advanced validation:
   - `ContentListResponseSchema`
   - `ContentSelectSchema`
@@ -89,8 +92,7 @@ async function example() {
   - `AuthorByAgentIdSchema`
   - `ImageSchema`
   - `ShareStatusValues`
-  - `StreamAssistantResponseInputSchema`
-  - `StreamAssistantResponseOutputSchema`
+	- `StreamAssistantResponseInputSchema`
 
 Note: The PostHog helper is currently internal and not exported from the package entry. See "PostHog Analytics Helper" below for usage details when working inside this repository.
 
@@ -98,8 +100,8 @@ Note: The PostHog helper is currently internal and not exported from the package
 
 - `sdk.listContentByAgent(params)`
   - params (validated by `ListContentByAgentInputSchema`):
-    - `agentId`: string[] (UUIDs) — required
-    - `status`: ("draft" | "approved")[] — required
+		- `agentId`: string (UUID) — required
+		- `status`: "draft" | "approved" | array of the same — optional, defaults to approved on the API
     - `limit?: number` — optional, default 10, between 1 and 100
     - `page?: number` — optional, default 1, min 1
   - Returns: `Promise<{ posts: Array<{ id, meta, imageUrl, status, shareStatus, createdAt, stats, image }>; total: number }>`
@@ -126,9 +128,10 @@ Note: The PostHog helper is currently internal and not exported from the package
 - `sdk.streamAssistantResponse(params)`
   - params (validated by `StreamAssistantResponseInputSchema`):
     - `message`: string — required
-    - `language`: `"en" | "pt"` — optional, defaults to `"en"`
-  - Returns: `Promise<StreamAssistantResponseOutputSchema>` — standard promise returning validated response data
-  - Note: Uses the `_query` method for consistency with other SDK methods
+		- `agentId`: string — required
+		- `language`: string — optional, defaults to `"en"`
+	- Returns: `AsyncGenerator<string>` — yields streaming chunks from the assistant
+	- Note: Iterate with `for await ... of` to consume the response stream
 
 ### PostHog Analytics Helper
 
@@ -165,7 +168,7 @@ Shapes shown here reflect the runtime Zod schemas returned by the SDK. Only `Sha
     - `meta`: { title?: string; description?: string; keywords?: string[]; slug?: string; sources?: string[] }
     - `imageUrl`: string | null
     - `status`: "draft" | "approved"
-    - `shareStatus`: "private" | "public"
+		- `shareStatus`: "private" | "shared"
     - `stats`: { wordsCount?: string; readTimeMinutes?: string; qualityScore?: string }
     - `createdAt`: Date
     - `image`: { data: string; contentType: string } | null
@@ -177,7 +180,7 @@ Shapes shown here reflect the runtime Zod schemas returned by the SDK. Only `Sha
   - `imageUrl`: string | null
   - `body`: string
   - `status`: "draft" | "approved"
-  - `shareStatus`: "private" | "public"
+	- `shareStatus`: "private" | "shared"
   - `meta`: { title?: string; description?: string; keywords?: string[]; slug?: string; sources?: string[] }
   - `request`: { description: string; layout: "tutorial" | "interview" | "article" | "changelog" }
   - `stats`: { wordsCount?: string; readTimeMinutes?: string; qualityScore?: string }
@@ -193,7 +196,7 @@ Shapes shown here reflect the runtime Zod schemas returned by the SDK. Only `Sha
   - Array of strings (slugs)
 
 - ShareStatus
-  - `"private" | "public"`
+  - `"private" | "shared"`
 
 ## Error Codes
 - `SDK_E001`: apiKey is required to initialize the ContentaGenSDK
@@ -211,8 +214,8 @@ async function run() {
 		const agentId = "00000000-0000-0000-0000-000000000000";
 
 		const list = await sdk.listContentByAgent({
-			agentId: [agentId],
-			status: ["approved"],
+			agentId,
+			status: "approved",
 			limit: 5,
 			page: 1,
 		});
