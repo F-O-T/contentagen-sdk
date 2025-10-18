@@ -2,6 +2,14 @@
 
 All notable changes to this package will be documented in this file.
 
+## [0.15.9] - 2025-10-18
+
+### Changed
+- **Documentation Alignment**: Updated README examples and API reference to reflect the current SDK implementation
+  - Quick start now uses the normalized `agentId` input and demonstrates streaming consumption
+  - Method signatures document the async iterator return type and expanded language handling
+  - Share status descriptions now match the SDK's `"private" | "shared"` enum values
+
 ## [0.15.8] - 2025-10-18
 
 ### Changed
