@@ -38,7 +38,7 @@ export const ContentMetaSchema = z.object({
 
 export const ContentRequestSchema = z.object({
 	description: z.string().min(1, "Description is required"),
-	layout: z.enum(["tutorial", "interview", "article", "changelog"]),
+	layout: z.enum(["tutorial", "article", "changelog"]),
 });
 
 // Content status enum values
