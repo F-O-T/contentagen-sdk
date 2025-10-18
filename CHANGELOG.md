@@ -10,6 +10,28 @@ All notable changes to this package will be documented in this file.
   - Resolves UUID validation errors when using string-based agent IDs
   - Maintains compatibility while improving flexibility for agent ID formats
 
+### Changed
+- **Enhanced Content Status Validation**: Improved `ListContentByAgentInputSchema` status field handling
+  - Changed from required array to optional field that accepts both single status and array of statuses
+  - Added automatic transformation to normalize single status values to arrays
+  - Uses dedicated `ContentStatusSchema` for consistent validation messaging
+- **Improved Agent ID Validation**: Added `.min(1)` validation to all `agentId` fields with descriptive error messages
+  - `ListContentByAgentInputSchema`, `GetContentBySlugInputSchema`, `StreamAssistantResponseInputSchema`
+- **Flexible Language Support**: Updated `StreamAssistantResponseInputSchema` language field
+  - Changed from enum to string with minimum length validation for broader language support
+  - Default value maintained as "en" with `.min(2)` validation
+- **Coerced Number Validation**: Updated `limit` and `page` fields to use `.coerce.number()` for automatic string-to-number conversion
+  - Improves API usability by accepting string values that get converted to numbers
+
+### Fixed
+- **Improved Streaming Implementation**: Enhanced `streamAssistantResponse` method
+  - Added proper error handling for network requests with detailed error messages
+  - Improved URL construction and query parameter handling
+  - Enhanced locale header handling with fallback to language parameter
+  - Better stream reading with proper UTF-8 decoding and lock management
+  - Added trailing chunk processing for complete data capture
+- **URL Construction Fix**: Normalized base URL by removing trailing slashes to prevent double slashes in API endpoints
+
 ### Added
 - **GitHub Issue Templates**: Added comprehensive issue templates for better bug tracking and feature requests
   - `bug-report.yml`: Template for reporting bugs with structured information
