@@ -2,6 +2,21 @@
 
 All notable changes to this package will be documented in this file.
 
+## [0.15.7] - 2025-10-18
+
+### Fixed
+- **UUID Validation Issue**: Changed `agentId` field validation from `z.uuid()` to `z.string()` in multiple schemas
+  - Updated `ListContentByAgentInputSchema`, `GetContentBySlugInputSchema`, and `StreamAssistantResponseInputSchema`
+  - Resolves UUID validation errors when using string-based agent IDs
+  - Maintains compatibility while improving flexibility for agent ID formats
+
+### Added
+- **GitHub Issue Templates**: Added comprehensive issue templates for better bug tracking and feature requests
+  - `bug-report.yml`: Template for reporting bugs with structured information
+  - `feature-request.yml`: Template for proposing new features
+  - `general-issue.yml`: Template for general questions and issues
+  - `mega-issue.yml`: Template for complex issues requiring detailed information
+
 ## [0.15.6] - 2025-10-16
 
 ### Added

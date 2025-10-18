@@ -103,20 +103,20 @@ export const ListContentByAgentInputSchema = z.object({
 			message: "Invalid content status. Must be one of: draft, approved.",
 		})
 		.array(),
-	agentId: z.uuid("Invalid Agent ID format."),
+	agentId: z.string(),
 	limit: z.number().min(1).max(100).optional().default(10),
 	page: z.number().min(1).optional().default(1),
 });
 
 export const GetContentBySlugInputSchema = z.object({
 	slug: z.string().min(1, "Slug is required."),
-	agentId: z.uuid("Invalid Agent ID format."),
+	agentId: z.string(),
 });
 
 export const StreamAssistantResponseInputSchema = z.object({
 	message: z.string().min(1, "Message is required"),
 	language: z.enum(["en", "pt"]).optional().default("en"),
-	agentId: z.uuid("Invalid Agent ID format"),
+	agentId: z.string(),
 });
 export const StreamAssistantResponseOutputSchema = z.string();
 
