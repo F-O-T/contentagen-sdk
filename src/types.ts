@@ -97,26 +97,32 @@ export const PersonaConfigSchema = z.object({
 	purpose: PurposeChannelSchema.optional(),
 });
 // Input schemas for API calls
+const ContentStatusSchema = z.enum(ContentStatusValues, {
+	message: "Invalid content status. Must be one of: draft, approved.",
+});
+
 export const ListContentByAgentInputSchema = z.object({
 	status: z
-		.enum(ContentStatusValues, {
-			message: "Invalid content status. Must be one of: draft, approved.",
-		})
-		.array(),
-	agentId: z.string(),
-	limit: z.number().min(1).max(100).optional().default(10),
-	page: z.number().min(1).optional().default(1),
+		.union([ContentStatusSchema, z.array(ContentStatusSchema)])
+		.optional()
+		.transform((value) => {
+			if (!value) return undefined;
+			return Array.isArray(value) ? value : [value];
+		}),
+	agentId: z.string().min(1, "Agent ID is required."),
+	limit: z.coerce.number().min(1).max(100).optional(),
+	page: z.coerce.number().min(1).optional(),
 });
 
 export const GetContentBySlugInputSchema = z.object({
 	slug: z.string().min(1, "Slug is required."),
-	agentId: z.string(),
+	agentId: z.string().min(1, "Agent ID is required."),
 });
 
 export const StreamAssistantResponseInputSchema = z.object({
 	message: z.string().min(1, "Message is required"),
-	language: z.enum(["en", "pt"]).optional().default("en"),
-	agentId: z.string(),
+	language: z.string().min(2).default("en"),
+	agentId: z.string().min(1, "Agent ID is required."),
 });
 export const StreamAssistantResponseOutputSchema = z.string();
 

@@ -57,7 +57,8 @@ export class ContentaGenSDK {
 			throw new Error("apiKey is required to initialize the ContentaGenSDK");
 		}
 
-		this.baseUrl = config.host || PRODUCTION_API_URL;
+		const host = config.host || PRODUCTION_API_URL;
+		this.baseUrl = host.replace(/\/+$/, "");
 		this.apiKey = config.apiKey;
 		this.locale = config.locale;
 	}
@@ -72,6 +73,39 @@ export class ContentaGenSDK {
 		}
 
 		return headers;
+	}
+
+	private buildUrl(path: string): URL {
+		const normalizedPath = path.startsWith("/") ? path : `/${path}`;
+		return new URL(`${this.baseUrl}/sdk${normalizedPath}`);
+	}
+
+	private appendQueryParams(
+		url: URL,
+		params: Record<string, unknown>,
+	): void {
+		for (const [key, value] of Object.entries(params)) {
+			if (value === undefined || value === null) {
+				continue;
+			}
+
+			if (Array.isArray(value)) {
+				let appended = false;
+				for (const item of value) {
+					if (item === undefined || item === null) {
+						continue;
+					}
+					url.searchParams.append(key, String(item));
+					appended = true;
+				}
+				if (!appended) {
+					url.searchParams.delete(key);
+				}
+				continue;
+			}
+
+			url.searchParams.set(key, String(value));
+		}
 	}
 
 	private transformDates(data: unknown): unknown {
@@ -108,22 +142,19 @@ export class ContentaGenSDK {
 		params: Record<string, unknown>,
 		schema: z.ZodType<T>,
 	): Promise<T> {
-		const url = new URL(`${this.baseUrl}/sdk${path}`);
-		Object.entries(params).forEach(([key, value]) => {
-			if (value !== undefined && value !== null) {
-				if (Array.isArray(value)) {
-					url.searchParams.set(key, value.join(","));
-				} else {
-					url.searchParams.set(key, String(value));
-				}
-			}
-		});
+		const url = this.buildUrl(path);
+		this.appendQueryParams(url, params);
 
-		const fullUrl = url.toString();
-
-		const response = await fetch(fullUrl, {
-			headers: this.getHeaders(),
-		});
+		let response: Awaited<ReturnType<typeof fetch>>;
+		try {
+			response = await fetch(url, {
+				headers: this.getHeaders(),
+			});
+		} catch (cause) {
+			const { code, message } = ERROR_CODES.API_REQUEST_FAILED;
+			const reason = cause instanceof Error ? cause.message : String(cause);
+			throw new Error(`${code}: ${message}. ${reason}`.trim());
+		}
 
 		if (!response.ok) {
 			const errorText = await response.text();
@@ -257,21 +288,19 @@ export class ContentaGenSDK {
 		try {
 			const validatedParams = StreamAssistantResponseInputSchema.parse(params);
 
-			const { agentId, message } = validatedParams;
+			const { agentId, message, language } = validatedParams;
 
-			// Use the URL constructor to safely build the URL with query parameters
-			const url = new URL(
-				`${this.baseUrl}/sdk${API_ENDPOINTS.streamAssistantResponse}`,
-			);
-			url.searchParams.set("agentId", agentId);
-			url.searchParams.set("message", message);
+			const url = this.buildUrl(API_ENDPOINTS.streamAssistantResponse);
+			this.appendQueryParams(url, { agentId, message });
 
-			const fullUrl = url.toString();
+			const headers = this.getHeaders();
+			const localeHeader =
+				headers["x-locale"] || language || "en";
+			headers["x-locale"] = localeHeader;
 
-			// Simple fetch call
-			const response = await fetch(fullUrl, {
+			const response = await fetch(url, {
 				method: "GET",
-				headers: this.getHeaders(),
+				headers,
 			});
 
 			if (!response.ok) {
@@ -286,19 +315,28 @@ export class ContentaGenSDK {
 				throw new Error("Response body is null, cannot create a stream.");
 			}
 
-			// Simple streaming - just like your server
 			const reader = response.body.getReader();
 			const decoder = new TextDecoder();
 
 			while (true) {
 				const { done, value } = await reader.read();
-
 				if (done) {
 					break;
 				}
-
-				const chunk = decoder.decode(value);
-				yield chunk;
+				if (!value) {
+					continue;
+				}
+				const chunk = decoder.decode(value, { stream: true });
+				if (chunk) {
+					yield chunk;
+				}
+			}
+			const trailing = decoder.decode();
+			if (trailing) {
+				yield trailing;
+			}
+			if (typeof reader.releaseLock === "function") {
+				reader.releaseLock();
 			}
 		} catch (error) {
 			if (error instanceof z.ZodError) {
