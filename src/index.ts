@@ -80,10 +80,7 @@ export class ContentaGenSDK {
 		return new URL(`${this.baseUrl}/sdk${normalizedPath}`);
 	}
 
-	private appendQueryParams(
-		url: URL,
-		params: Record<string, unknown>,
-	): void {
+	private appendQueryParams(url: URL, params: Record<string, unknown>): void {
 		for (const [key, value] of Object.entries(params)) {
 			if (value === undefined || value === null) {
 				continue;
@@ -288,14 +285,13 @@ export class ContentaGenSDK {
 		try {
 			const validatedParams = StreamAssistantResponseInputSchema.parse(params);
 
-			const { agentId, message, language } = validatedParams;
+			const { message } = validatedParams;
 
 			const url = this.buildUrl(API_ENDPOINTS.streamAssistantResponse);
-			this.appendQueryParams(url, { agentId, message });
+			this.appendQueryParams(url, { message });
 
 			const headers = this.getHeaders();
-			const localeHeader =
-				headers["x-locale"] || language || "en";
+			const localeHeader = headers["x-locale"] || "en";
 			headers["x-locale"] = localeHeader;
 
 			const response = await fetch(url, {

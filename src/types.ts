@@ -121,8 +121,6 @@ export const GetContentBySlugInputSchema = z.object({
 
 export const StreamAssistantResponseInputSchema = z.object({
 	message: z.string().min(1, "Message is required"),
-	language: z.string().min(2).default("en"),
-	agentId: z.string().min(1, "Agent ID is required."),
 });
 export const StreamAssistantResponseOutputSchema = z.string();
 
