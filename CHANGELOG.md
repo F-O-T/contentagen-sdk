@@ -2,6 +2,20 @@
 
 All notable changes to this package will be documented in this file.
 
+## [0.16.0] - 2025-10-21
+
+### Breaking
+- **Simplified Stream Assistant Response**: Removed `language` and `agentId` fields from `StreamAssistantResponseInputSchema`
+  - Stream assistant response now only requires a `message` parameter
+  - Simplified API interface for easier integration
+  - Updated method implementation to use default locale ("en") and removed agent-specific routing
+
+### Changed
+- **Stream Assistant Response Implementation**: Simplified parameter handling and URL construction
+  - Removed agent-specific query parameters from stream requests
+  - Simplified locale header handling with default fallback to "en"
+  - Updated code formatting for cleaner implementation
+
 ## [0.15.10] - 2025-10-18
 
 ### Fixed
