@@ -125,20 +125,21 @@ describe("ContentaGenSDK", () => {
 		const sdk = createSdk({
 			apiKey: "test-key",
 			host: "https://api.example.com",
+			locale: "pt-BR",
 		});
 
 		const chunks: string[] = [];
 		for await (const chunk of sdk.streamAssistantResponse({
-			agentId: "agent-789",
 			message: "Hello!",
-			language: "pt-BR",
 		})) {
 			chunks.push(chunk);
 		}
 
 		expect(chunks.join("")).toBe("hello world");
 
-		const lastCall = fetchMock.mock.calls[0] as Parameters<typeof fetch> | undefined;
+		const lastCall = fetchMock.mock.calls[0] as
+			| Parameters<typeof fetch>
+			| undefined;
 		expect(lastCall).toBeDefined();
 		const init = (lastCall?.[1] as { headers?: Record<string, string> }) ?? {};
 		const headers = init.headers ?? {};
