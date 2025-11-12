@@ -1,5 +1,5 @@
 import { z } from "zod";
-import type { ContentList, ContentSelect } from "./types";
+import type { ContentList, ContentSelect, Locale } from "./types";
 import {
 	AuthorByAgentIdSchema,
 	ContentListResponseSchema,
@@ -43,7 +43,7 @@ const PRODUCTION_API_URL = "https://api.contentagen.com";
 
 export interface SdkConfig {
 	apiKey: string;
-	locale?: string;
+	locale?: Locale;
 	host?: string;
 }
 
@@ -291,8 +291,6 @@ export class ContentaGenSDK {
 			this.appendQueryParams(url, { message });
 
 			const headers = this.getHeaders();
-			const localeHeader = headers["x-locale"] || "en";
-			headers["x-locale"] = localeHeader;
 
 			const response = await fetch(url, {
 				method: "GET",
