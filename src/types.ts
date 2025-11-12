@@ -123,7 +123,8 @@ export const StreamAssistantResponseInputSchema = z.object({
 	message: z.string().min(1, "Message is required"),
 });
 export const StreamAssistantResponseOutputSchema = z.string();
-
+export const LocaleSchema = z.enum(["en-US", "pt-BR"]);
+export type Locale = z.infer<typeof LocaleSchema>;
 // Reusable image schema for SDK responses
 export const ImageSchema = z
 	.object({

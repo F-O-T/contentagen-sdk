@@ -2,6 +2,15 @@
 
 All notable changes to this package will be documented in this file.
 
+## [0.16.1] - 2025-11-12
+
+### Fixed
+- **Locale Type Safety**: Added proper `Locale` type with restricted enum values
+  - Created `LocaleSchema` with `z.enum(["en-US", "pt-BR"])` for validation
+  - Updated `SdkConfig` interface to use typed `Locale` instead of generic `string`
+  - Removed redundant locale header assignment in `streamAssistantResponse` method
+  - Improves type safety and ensures only valid locale codes are accepted
+
 ## [0.16.0] - 2025-10-21
 
 ### Breaking
